@@ -31,9 +31,9 @@ describe('Preview Component', () => {
       job_id: 'test-123',
       status: 'processing',
       progress: 45,
-      result_url: null,
-      stats: null,
-      error: null,
+      result_url: undefined,
+      stats: undefined,
+      error: undefined,
       device_used: 'cuda',
     }
 
@@ -48,10 +48,10 @@ describe('Preview Component', () => {
       job_id: 'test-123',
       status: 'processing',
       progress: 30,
-      result_url: null,
-      stats: null,
-      error: null,
-      device_used: null,
+      result_url: undefined,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -65,10 +65,10 @@ describe('Preview Component', () => {
       job_id: 'test-123',
       status: 'failed',
       progress: 0,
-      result_url: null,
-      stats: null,
+      result_url: undefined,
+      stats: undefined,
       error: 'Out of memory',
-      device_used: null,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -82,10 +82,10 @@ describe('Preview Component', () => {
       job_id: 'test-123',
       status: 'failed',
       progress: 0,
-      result_url: null,
-      stats: null,
-      error: null,
-      device_used: null,
+      result_url: undefined,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -105,7 +105,7 @@ describe('Preview Component', () => {
         width_mm: 200.0,
         height_mm: 150.0,
       },
-      error: null,
+      error: undefined,
       device_used: 'cpu',
     }
 
@@ -129,11 +129,11 @@ describe('Preview Component', () => {
       stats: {
         path_count: 10,
         total_length_mm: 500.0,
-        width_mm: null,
-        height_mm: null,
+        width_mm: undefined,
+        height_mm: undefined,
       },
-      error: null,
-      device_used: null,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -151,9 +151,9 @@ describe('Preview Component', () => {
       status: 'completed',
       progress: 100,
       result_url: '/api/uploads/test-789.svg',
-      stats: null,
-      error: null,
-      device_used: null,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -169,9 +169,9 @@ describe('Preview Component', () => {
       status: 'completed',
       progress: 100,
       result_url: '/api/uploads/test-download-123.svg',
-      stats: null,
-      error: null,
-      device_used: null,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -185,10 +185,10 @@ describe('Preview Component', () => {
       job_id: 'test-123',
       status: 'processing',
       progress: 50,
-      result_url: null,
-      stats: null,
-      error: null,
-      device_used: null,
+      result_url: undefined,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
@@ -203,9 +203,9 @@ describe('Preview Component', () => {
       status: 'completed',
       progress: 100,
       result_url: '/api/uploads/test-123.svg',
-      stats: null,
-      error: null,
-      device_used: null,
+      stats: undefined,
+      error: undefined,
+      device_used: undefined,
     }
 
     render(<Preview jobStatus={jobStatus} />)
