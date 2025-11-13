@@ -229,7 +229,7 @@ async def test_process_job_success(job_service, mock_storage, mock_processor, tm
         "height_mm": 150.0,
     }
     mock_result.device_used = "cpu"
-    mock_processor.process.return_value = mock_result
+    mock_processor.process_sync.return_value = mock_result
 
     await job_service.process_job(job_id, params)
 
@@ -283,7 +283,7 @@ async def test_process_job_handles_error(
     }
 
     # Mock processing failure
-    mock_processor.process.side_effect = RuntimeError("Processing failed")
+    mock_processor.process_sync.side_effect = RuntimeError("Processing failed")
 
     params = ProcessingParams(
         canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3

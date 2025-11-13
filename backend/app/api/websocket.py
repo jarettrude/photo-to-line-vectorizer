@@ -224,7 +224,7 @@ async def websocket_endpoint(websocket: WebSocket, job_id: str) -> None:
                 if data == "ping":
                     await websocket.send_text("pong")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Send keepalive ping from server
                 try:
                     await websocket.send_text(json.dumps({"type": "keepalive"}))
