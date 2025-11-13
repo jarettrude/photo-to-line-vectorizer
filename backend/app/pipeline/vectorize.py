@@ -108,30 +108,33 @@ class ImageTracerVectorizer:
         Raises:
             RuntimeError: If subprocess fails
         """
-        tracer_script = """
-        const ImageTracer = require('imagetracerjs');
-        const fs = require('fs');
+        # Use JSON encoding for safe parameter passing
+        config = {
+            "imagePath": str(image_path),
+            "threshold": threshold,
+            "qtres": qtres,
+            "pathomit": pathomit,
+            "scale": scale,
+        }
 
-        const options = {
-            ltres: THRESHOLD / 255.0,
-            qtres: QTRES,
-            pathomit: PATHOMIT,
-            scale: SCALE,
+        tracer_script = f"""
+        const ImageTracer = require('imagetracerjs');
+        const config = {json.dumps(config)};
+
+        const options = {{
+            ltres: config.threshold / 255.0,
+            qtres: config.qtres,
+            pathomit: config.pathomit,
+            scale: config.scale,
             strokewidth: 1,
             linefilter: true,
-            pal: [{r:0, g:0, b:0, a:255}, {r:255, g:255, b:255, a:255}]
-        };
+            pal: [{{r:0, g:0, b:0, a:255}}, {{r:255, g:255, b:255, a:255}}]
+        }};
 
-        ImageTracer.imageToSVG('IMAGE_PATH', (svgstr) => {
+        ImageTracer.imageToSVG(config.imagePath, (svgstr) => {{
             console.log(svgstr);
-        }, options);
+        }}, options);
         """
-
-        tracer_script = tracer_script.replace("IMAGE_PATH", str(image_path))
-        tracer_script = tracer_script.replace("THRESHOLD", str(threshold))
-        tracer_script = tracer_script.replace("QTRES", str(qtres))
-        tracer_script = tracer_script.replace("PATHOMIT", str(pathomit))
-        tracer_script = tracer_script.replace("SCALE", str(scale))
 
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".js", delete=False

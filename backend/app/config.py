@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     host: Annotated[str, Field(description="Server host address")] = "0.0.0.0"
     port: Annotated[int, Field(ge=1, le=65535, description="Server port")] = 8000
     debug: Annotated[bool, Field(description="Debug mode flag")] = True
+    allowed_origins: Annotated[
+        str,
+        Field(description="Comma-separated list of allowed CORS origins"),
+    ] = "http://localhost:5173,http://localhost:3000"
 
     # File Storage
     upload_dir: Annotated[Path, Field(description="Upload directory path")] = Path(

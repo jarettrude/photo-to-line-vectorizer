@@ -78,3 +78,8 @@ models/**/onnx/**
 models/**/pytorch/**
 !models/**/*.md
 !models/docs/**
+
+# Temporary upload/result files
+backend/temp/
+backend/temp/uploads/
+backend/temp/results/
