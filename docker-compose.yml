@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: photo-vectorizer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -15,9 +30,13 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=True
+      - REDIS_URL=redis://redis:6379/0
       - U2NET_MODEL_PATH=/models/u2net/pytorch/u2netp.pth
       - INFORMATIVE_DRAWINGS_MODEL_PATH=/models/informative-drawings/checkpoints/netG_A_sketch.pth
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
@@ -33,6 +52,7 @@ services:
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
+  redis-data:
   models:
   uploads:
   results:

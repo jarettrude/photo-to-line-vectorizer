@@ -68,6 +68,17 @@ class Settings(BaseSettings):
         Field(description="Redis URL for job storage (None for in-memory)"),
     ] = None
 
+    # Rate Limiting
+    rate_limit_enabled: Annotated[
+        bool, Field(description="Enable rate limiting")
+    ] = True
+    rate_limit_uploads: Annotated[
+        str, Field(description="Rate limit for upload endpoint")
+    ] = "10/minute"
+    rate_limit_processing: Annotated[
+        str, Field(description="Rate limit for processing endpoint")
+    ] = "5/minute"
+
     @field_validator("upload_dir", "results_dir")
     @classmethod
     def validate_directory_paths(cls, v: Path) -> Path:

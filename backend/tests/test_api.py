@@ -12,6 +12,13 @@ from PIL import Image
 import io
 
 from main import app
+from storage import init_job_storage
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_job_storage():
+    """Initialize job storage for tests (in-memory mode)."""
+    init_job_storage(redis_url=None)
 
 
 @pytest.fixture
