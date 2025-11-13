@@ -5,11 +5,13 @@ Coordinates between storage, processor, and other components.
 Handles all business rules and validations.
 """
 
+import asyncio
 import logging
 import uuid
 from pathlib import Path
 
 from api.models import ProcessingStatus
+from api.websocket import ws_manager
 from config import settings
 from fastapi import HTTPException, UploadFile
 from pipeline.processor import PhotoToLineProcessor, ProcessingParams, ProcessingResult
@@ -165,11 +167,27 @@ class JobService:
 
         logger.info(f"Starting processing for job {job_id}")
 
+        # Broadcast initial progress
+        await ws_manager.broadcast_progress(
+            job_id, progress=10, stage="preprocessing", message="Loading image"
+        )
+
         try:
-            # Execute processing pipeline
-            result: ProcessingResult = self.processor.process(
+            # Execute processing pipeline with progress updates
+            # Note: Running processor synchronously in thread pool
+            await ws_manager.broadcast_progress(
+                job_id, progress=20, stage="line_extraction", message="Extracting lines"
+            )
+
+            # Run processor in thread pool to avoid blocking
+            result: ProcessingResult = await asyncio.to_thread(
+                self.processor.process_sync,
                 image_path=Path(job["input_path"]),
                 params=params,
+            )
+
+            await ws_manager.broadcast_progress(
+                job_id, progress=80, stage="export", message="Generating SVG"
             )
 
             # Save result
@@ -189,11 +207,20 @@ class JobService:
                 f"device={result.device_used}"
             )
 
+            # Broadcast completion
+            result_url = f"/api/download/{job_id}"
+            await ws_manager.broadcast_complete(
+                job_id, result_url=result_url, stats=dict(result.stats)
+            )
+
         except Exception as e:
             logger.exception(f"Job {job_id} failed")
 
             # Update job with error
             self.storage.set_status(job_id, ProcessingStatus.FAILED, error=str(e))
+
+            # Broadcast error
+            await ws_manager.broadcast_error(job_id, error=str(e))
 
             raise HTTPException(
                 status_code=500, detail=f"Processing failed: {e}"

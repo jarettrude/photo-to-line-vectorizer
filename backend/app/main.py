@@ -10,10 +10,11 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from api.endpoints import router as api_router
+from api.websocket import websocket_endpoint
 from auth import create_db_and_tables
 from auth.routes import router as auth_router
 from config import settings
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -87,6 +88,16 @@ app.include_router(api_router, prefix="/api", tags=["api"])
 # Include auth routes if authentication is enabled
 if settings.auth_enabled:
     app.include_router(auth_router)
+
+
+@app.websocket("/ws/status/{job_id}")
+async def websocket_status(websocket: WebSocket, job_id: str):
+    """
+    WebSocket endpoint for real-time job progress updates.
+
+    Clients connect to receive live progress updates during processing.
+    """
+    await websocket_endpoint(websocket, job_id)
 
 
 @app.get("/")
