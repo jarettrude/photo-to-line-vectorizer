@@ -33,6 +33,7 @@ class JobStorage:
         """
         self.use_redis = use_redis and redis_url is not None
         self.redis_url = redis_url
+        self._memory_storage: dict[str, dict] = {}
 
         if self.use_redis:
             try:
@@ -50,10 +51,8 @@ class JobStorage:
                 )
                 self.use_redis = False
                 self.redis_client = None
-                self._memory_storage: dict[str, dict] = {}
         else:
             self.redis_client = None
-            self._memory_storage: dict[str, dict] = {}
             logger.info("Using in-memory job storage")
 
     def _get_key(self, job_id: str) -> str:
@@ -185,7 +184,7 @@ class JobStorage:
         Returns:
             True if updated, False if job not found
         """
-        updates = {
+        updates: dict[str, Any] = {
             "output_path": str(output_path),
             "status": ProcessingStatus.COMPLETED.value,
         }

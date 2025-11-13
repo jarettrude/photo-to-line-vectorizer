@@ -182,7 +182,7 @@ class JobService:
 
             # Run processor in thread pool to avoid blocking
             result: ProcessingResult = await asyncio.to_thread(
-                self.processor.process_sync,
+                self.processor.process,
                 image_path=Path(job["input_path"]),
                 params=params,
             )
