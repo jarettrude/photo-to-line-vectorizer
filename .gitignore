@@ -1,0 +1,80 @@
+# OS files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Icon?
+
+# IDE/editor
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+*.pid
+
+# Environment
+.env
+.env.*
+!.env.example
+.python-version
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+.build/
+.venv/
+venv/
+ENV/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+ruff_cache/
+.ipynb_checkpoints/
+
+# Node/Next.js/Vite
+node_modules/
+frontend/node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+.yarn/install-state.gz
+.yarnrc.yml
+.next/
+.next_cache/
+out/
+coverage/
+*.tsbuildinfo
+# Vite caches/build
+.vite/
+node_modules/.vite/
+frontend/.vite/
+dist/
+frontend/dist/
+
+# Docker/containers
+*.pid
+
+# Models and large binaries (keep docs)
+models/**/checkpoints/**
+models/**/onnx/**
+models/**/pytorch/**
+!models/**/*.md
+!models/docs/**
