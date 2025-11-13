@@ -109,7 +109,8 @@ class ProcessParams(BaseModel):
         """Ensure low threshold is less than high threshold."""
         low, high = v
         if not (0 <= low < high <= 255):
-            raise ValueError("Edge threshold must be 0 <= low < high <= 255")
+            msg = "Edge threshold must be 0 <= low < high <= 255"
+            raise ValueError(msg)
         return v
 
 

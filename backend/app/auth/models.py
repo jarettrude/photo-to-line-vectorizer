@@ -13,7 +13,6 @@ class Base(DeclarativeBase):
     """Base class for SQLAlchemy models."""
 
 
-
 class User(SQLAlchemyBaseUserTableUUID, Base):
     """
     User model with email-based authentication.

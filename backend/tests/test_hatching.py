@@ -33,8 +33,7 @@ class TestHatchGenerator:
     def gradient_image(self):
         """Create gradient image from white to black."""
         img = np.linspace(255, 0, 200, dtype=np.uint8)
-        img = np.repeat(img.reshape(-1, 1), 200, axis=1)
-        return img
+        return np.repeat(img.reshape(-1, 1), 200, axis=1)
 
     @pytest.fixture
     def empty_edges(self):

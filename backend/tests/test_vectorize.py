@@ -56,9 +56,7 @@ class TestImageTracerVectorizer:
 
     def test_vectorize_with_quality_settings(self, vectorizer, simple_line_image):
         """Test vectorization with different quality settings."""
-        svg_low = vectorizer.vectorize(
-            simple_line_image, line_threshold=128, qtres=2.0
-        )
+        svg_low = vectorizer.vectorize(simple_line_image, line_threshold=128, qtres=2.0)
         svg_high = vectorizer.vectorize(
             simple_line_image, line_threshold=128, qtres=0.5
         )

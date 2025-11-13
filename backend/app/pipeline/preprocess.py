@@ -62,11 +62,13 @@ class ImagePreprocessor:
             FileNotFoundError: If file doesn't exist
         """
         if not image_path.exists():
-            raise FileNotFoundError(f"Image not found: {image_path}")
+            msg = f"Image not found: {image_path}"
+            raise FileNotFoundError(msg)
 
         suffix = image_path.suffix.lower()
         if suffix not in self.SUPPORTED_FORMATS:
-            raise ValueError(f"Unsupported format: {suffix}")
+            msg = f"Unsupported format: {suffix}"
+            raise ValueError(msg)
 
         try:
             pil_image = Image.open(image_path)
@@ -80,7 +82,7 @@ class ImagePreprocessor:
             return image
 
         except Exception as e:
-            logger.error(f"Failed to load image {image_path}: {e}")
+            logger.exception(f"Failed to load image {image_path}: {e}")
             raise
 
     def resize_if_needed(
@@ -133,7 +135,8 @@ class ImagePreprocessor:
             RuntimeError: If U²-Net predictor not available
         """
         if self.u2net is None:
-            raise RuntimeError("U²-Net predictor not initialized")
+            msg = "U²-Net predictor not initialized"
+            raise RuntimeError(msg)
 
         rgba = self.u2net.isolate_subject(image, threshold)
 

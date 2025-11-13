@@ -117,7 +117,8 @@ class PlotterExporter:
             logger.info(f"Exported HPGL to {output_path}")
 
         except Exception as e:
-            raise RuntimeError(f"HPGL export failed: {e}")
+            msg = f"HPGL export failed: {e}"
+            raise RuntimeError(msg)
         finally:
             tmp_path.unlink(missing_ok=True)
 
@@ -202,10 +203,12 @@ class PlotterExporter:
             logger.info(f"Exported G-code to {output_path}")
 
         except ImportError:
-            logger.error("vpype-gcode plugin not available")
-            raise RuntimeError("vpype-gcode plugin required for G-code export")
+            logger.exception("vpype-gcode plugin not available")
+            msg = "vpype-gcode plugin required for G-code export"
+            raise RuntimeError(msg)
         except Exception as e:
-            raise RuntimeError(f"G-code export failed: {e}")
+            msg = f"G-code export failed: {e}"
+            raise RuntimeError(msg)
         finally:
             tmp_path.unlink(missing_ok=True)
 
@@ -237,6 +240,7 @@ class PlotterExporter:
         elif format_lower in ("gcode", "g-code", "nc"):
             self.export_gcode(svg_string, output_path, **kwargs)
         else:
-            raise ValueError(f"Unsupported export format: {format}")
+            msg = f"Unsupported export format: {format}"
+            raise ValueError(msg)
 
         logger.info(f"Exported to {format_lower.upper()}: {output_path}")

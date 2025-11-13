@@ -69,7 +69,7 @@ async def request_magic_link(
             }
 
         # Generate magic link token
-        token = await user_manager.forgot_password(user, request)
+        await user_manager.forgot_password(user, request)
 
         return {
             "message": "If an account exists with this email, you will receive a magic link."

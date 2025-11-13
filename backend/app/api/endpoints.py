@@ -139,8 +139,8 @@ async def upload_image(
         )
 
     except Exception as e:
-        logger.error(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail="Upload failed")
+        logger.exception(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Upload failed") from None
 
 
 async def process_job(job_id: str, params: ProcessingParams) -> None:
@@ -182,7 +182,7 @@ async def process_job(job_id: str, params: ProcessingParams) -> None:
         logger.info(f"Job {job_id} completed successfully")
 
     except Exception as e:
-        logger.error(f"Job {job_id} failed: {e}")
+        logger.exception(f"Job {job_id} failed: {e}")
         job_storage.set_status(job_id, ProcessingStatus.FAILED, error=str(e))
 
 
@@ -384,6 +384,6 @@ async def download_result(job_id: str, format: str = "svg") -> FileResponse:
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from None
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=f"Export failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {e}") from None

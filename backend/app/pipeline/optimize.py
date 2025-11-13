@@ -52,8 +52,12 @@ class VpypeOptimizer:
         output_path = None
         try:
             # read_svg returns (LineCollection, width, height)
-            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
-            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
+            line_collection, width, height = vp.read_svg(
+                str(tmp_path), quantization=0.1
+            )
+            doc = vp.Document(
+                line_collection=line_collection, page_size=(width, height)
+            )
 
             logger.debug(f"Initial layer count: {doc.count()}")
 
@@ -100,8 +104,12 @@ class VpypeOptimizer:
             tmp.write(svg_string)
 
         try:
-            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
-            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
+            line_collection, width, height = vp.read_svg(
+                str(tmp_path), quantization=0.1
+            )
+            doc = vp.Document(
+                line_collection=line_collection, page_size=(width, height)
+            )
 
             # Count total paths across all layers
             path_count = sum(len(layer) for layer in doc.layers.values())
@@ -148,8 +156,12 @@ class VpypeOptimizer:
 
         output_path = None
         try:
-            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
-            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
+            line_collection, width, height = vp.read_svg(
+                str(tmp_path), quantization=0.1
+            )
+            doc = vp.Document(
+                line_collection=line_collection, page_size=(width, height)
+            )
 
             target_width_px = vp.convert(f"{canvas_width_mm}mm")
             target_height_px = vp.convert(f"{canvas_height_mm}mm")

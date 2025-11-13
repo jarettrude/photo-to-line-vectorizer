@@ -89,7 +89,8 @@ class LineExtractor:
         if method == LineExtractionMethod.XDOG:
             return self.xdog.extract_lines(image)
 
-        raise ValueError(f"Unknown extraction method: {method}")
+        msg = f"Unknown extraction method: {method}"
+        raise ValueError(msg)
 
     def extract_with_params(
         self,

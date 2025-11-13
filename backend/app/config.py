@@ -69,9 +69,9 @@ class Settings(BaseSettings):
     ] = None
 
     # Rate Limiting
-    rate_limit_enabled: Annotated[
-        bool, Field(description="Enable rate limiting")
-    ] = True
+    rate_limit_enabled: Annotated[bool, Field(description="Enable rate limiting")] = (
+        True
+    )
     rate_limit_uploads: Annotated[
         str, Field(description="Rate limit for upload endpoint")
     ] = "10/minute"
@@ -80,9 +80,9 @@ class Settings(BaseSettings):
     ] = "5/minute"
 
     # Authentication
-    secret_key: Annotated[
-        str, Field(description="Secret key for JWT tokens")
-    ] = "changeme-secret-key-in-production-please"
+    secret_key: Annotated[str, Field(description="Secret key for JWT tokens")] = (
+        "changeme-secret-key-in-production-please"
+    )
     resend_api_key: Annotated[
         str | None, Field(description="Resend API key for email sending")
     ] = None
@@ -92,9 +92,7 @@ class Settings(BaseSettings):
     frontend_url: Annotated[
         str, Field(description="Frontend URL for magic link redirects")
     ] = "http://localhost:5173"
-    auth_enabled: Annotated[
-        bool, Field(description="Enable authentication")
-    ] = False
+    auth_enabled: Annotated[bool, Field(description="Enable authentication")] = False
 
     @field_validator("upload_dir", "results_dir")
     @classmethod

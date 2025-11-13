@@ -224,7 +224,8 @@ class PhotoToLineProcessor:
         }
 
         if preset not in presets:
-            raise ValueError(f"Unknown preset: {preset}")
+            msg = f"Unknown preset: {preset}"
+            raise ValueError(msg)
 
         params = presets[preset]
         return self.process(image_path, params)

@@ -18,7 +18,11 @@ from auth.models import User
 logger = logging.getLogger(__name__)
 
 # Secret key for JWT tokens (should be set via environment variable in production)
-SECRET = settings.secret_key if hasattr(settings, "secret_key") else "changeme-secret-key-in-production"
+SECRET = (
+    settings.secret_key
+    if hasattr(settings, "secret_key")
+    else "changeme-secret-key-in-production"
+)
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -47,7 +51,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         try:
             # Get the base URL from request or config
-            base_url = settings.frontend_url if hasattr(settings, "frontend_url") else "http://localhost:5173"
+            base_url = (
+                settings.frontend_url
+                if hasattr(settings, "frontend_url")
+                else "http://localhost:5173"
+            )
             magic_link = f"{base_url}/auth/verify?token={token}"
 
             # Send email via Resend
@@ -78,7 +86,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
             logger.info(f"Magic link sent to {user.email}")
         except Exception as e:
-            logger.error(f"Failed to send magic link to {user.email}: {e}")
+            logger.exception(f"Failed to send magic link to {user.email}: {e}")
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Request | None = None

@@ -45,7 +45,9 @@ class JobStorage:
                 self.redis_client.ping()
                 logger.info(f"Connected to Redis: {redis_url}")
             except Exception as e:
-                logger.warning(f"Redis connection failed: {e}. Using in-memory storage.")
+                logger.warning(
+                    f"Redis connection failed: {e}. Using in-memory storage."
+                )
                 self.use_redis = False
                 self.redis_client = None
                 self._memory_storage: dict[str, dict] = {}
@@ -255,7 +257,8 @@ def get_job_storage() -> JobStorage:
     """Get the global job storage instance."""
     global job_storage
     if job_storage is None:
-        raise RuntimeError("Job storage not initialized")
+        msg = "Job storage not initialized"
+        raise RuntimeError(msg)
     return job_storage
 
 
