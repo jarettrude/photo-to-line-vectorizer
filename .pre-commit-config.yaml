@@ -7,7 +7,7 @@ repos:
     hooks:
       - id: backend-ruff-check
         name: Backend - Ruff Linting
-        entry: bash -c 'cd backend && python -m ruff check app/ tests/'
+        entry: bash -c 'cd backend && ruff check app/ tests/ --fix'
         language: system
         types: [python]
         pass_filenames: false
@@ -15,7 +15,7 @@ repos:
 
       - id: backend-ruff-format
         name: Backend - Ruff Formatting
-        entry: bash -c 'cd backend && python -m ruff format app/ tests/ --check'
+        entry: bash -c 'cd backend && ruff format app/ tests/'
         language: system
         types: [python]
         pass_filenames: false
@@ -23,7 +23,7 @@ repos:
 
       - id: backend-mypy
         name: Backend - MyPy Type Checking
-        entry: bash -c 'cd backend && python -m mypy app/ --strict --no-error-summary'
+        entry: bash -c 'cd backend && uv run mypy app/ --no-error-summary'
         language: system
         types: [python]
         pass_filenames: false

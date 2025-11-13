@@ -6,12 +6,14 @@ as fast, deterministic alternatives to ML models.
 """
 
 import logging
-from typing import Tuple
 
 import cv2
 import numpy as np
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
+
+RGB_CHANNELS = 3
 
 
 class CannyEdgeDetector:
@@ -44,10 +46,10 @@ class CannyEdgeDetector:
 
     def extract_lines(
         self,
-        image: np.ndarray,
-        blur_kernel: Tuple[int, int] = (5, 5),
+        image: NDArray[np.uint8],
+        blur_kernel: tuple[int, int] = (5, 5),
         blur_sigma: float = 1.0,
-    ) -> np.ndarray:
+    ) -> NDArray[np.uint8]:
         """
         Extract line art from image using Canny edge detection.
 
@@ -59,14 +61,14 @@ class CannyEdgeDetector:
         Returns:
             Binary edge map (255 = edge, 0 = no edge)
         """
-        if len(image.shape) == 3:
+        if len(image.shape) == RGB_CHANNELS:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray = image.copy()
 
         blurred = cv2.GaussianBlur(gray, blur_kernel, blur_sigma)
 
-        edges = cv2.Canny(
+        edges: NDArray[np.uint8] = cv2.Canny(  # type: ignore[assignment]
             blurred,
             self.low_threshold,
             self.high_threshold,
@@ -109,7 +111,7 @@ class BilateralCannyDetector:
         self.bilateral_sigma_color = bilateral_sigma_color
         self.bilateral_sigma_space = bilateral_sigma_space
 
-    def extract_lines(self, image: np.ndarray) -> np.ndarray:
+    def extract_lines(self, image: NDArray[np.uint8]) -> NDArray[np.uint8]:
         """
         Extract line art using bilateral filtering + Canny.
 
@@ -119,7 +121,7 @@ class BilateralCannyDetector:
         Returns:
             Binary edge map
         """
-        if len(image.shape) == 3:
+        if len(image.shape) == RGB_CHANNELS:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray = image.copy()
@@ -131,7 +133,9 @@ class BilateralCannyDetector:
             self.bilateral_sigma_space,
         )
 
-        edges = cv2.Canny(filtered, self.low_threshold, self.high_threshold)
+        edges: NDArray[np.uint8] = cv2.Canny(
+            filtered, self.low_threshold, self.high_threshold
+        )  # type: ignore[assignment]
 
         logger.debug(f"Bilateral Canny: {np.sum(edges > 0)} edge pixels")
         return edges
@@ -169,7 +173,7 @@ class XDoGExtractor:
         self.epsilon = epsilon
         self.phi = phi
 
-    def extract_lines(self, image: np.ndarray) -> np.ndarray:
+    def extract_lines(self, image: NDArray[np.uint8]) -> NDArray[np.uint8]:
         """
         Extract stylized line art using XDoG algorithm.
 
@@ -179,15 +183,15 @@ class XDoGExtractor:
         Returns:
             Binary line art image
         """
-        if len(image.shape) == 3:
+        if len(image.shape) == RGB_CHANNELS:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray = image.copy()
 
-        gray = gray.astype(np.float32) / 255.0
+        gray_float = gray.astype(np.float32) / 255.0
 
-        g1 = cv2.GaussianBlur(gray, (0, 0), self.sigma)
-        g2 = cv2.GaussianBlur(gray, (0, 0), self.sigma * self.k)
+        g1 = cv2.GaussianBlur(gray_float, (0, 0), self.sigma)
+        g2 = cv2.GaussianBlur(gray_float, (0, 0), self.sigma * self.k)
 
         dog = g1 - self.tau * g2
 
@@ -197,13 +201,13 @@ class XDoGExtractor:
             1.0,
         )
 
-        xdog = (xdog * 255).astype(np.uint8)
+        xdog_result = (xdog * 255).astype(np.uint8)
 
         logger.debug("XDoG line extraction complete")
-        return xdog
+        return xdog_result
 
 
-def auto_canny(image: np.ndarray, sigma: float = 0.33) -> np.ndarray:
+def auto_canny(image: NDArray[np.uint8], sigma: float = 0.33) -> NDArray[np.uint8]:
     """
     Automatic Canny edge detection with adaptive thresholds.
 
@@ -217,11 +221,12 @@ def auto_canny(image: np.ndarray, sigma: float = 0.33) -> np.ndarray:
     Returns:
         Binary edge map
     """
+    max_intensity = 255
     v = np.median(image)
     lower = int(max(0, (1.0 - sigma) * v))
-    upper = int(min(255, (1.0 + sigma) * v))
+    upper = int(min(max_intensity, (1.0 + sigma) * v))
 
-    edges = cv2.Canny(image, lower, upper)
+    edges: NDArray[np.uint8] = cv2.Canny(image, lower, upper)  # type: ignore[assignment]
 
     logger.debug(f"Auto Canny thresholds: {lower}, {upper}")
     return edges

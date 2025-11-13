@@ -103,5 +103,4 @@ class DeviceManager:
         return tensor_or_model.to(self._device)
 
 
-# Global device manager instance
 device_manager = DeviceManager()

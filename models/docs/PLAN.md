@@ -171,7 +171,7 @@ Response: { "job_id": "uuid", "image_url": "/temp/uuid.jpg" }
 
 **POST `/api/process`**
 ```json
-Request: { 
+Request: {
   "job_id": "uuid",
   "mode": "auto",
   "params": {
@@ -185,7 +185,7 @@ Response: { "job_id": "uuid", "status": "processing", "websocket_url": "..." }
 
 **GET `/api/status/{job_id}`**
 ```json
-Response: { 
+Response: {
   "job_id": "uuid", "status": "completed", "progress": 100,
   "result_url": "/results/uuid.svg",
   "stats": { "path_count": 1247, "total_length": 45230, "estimated_time": "8m 30s" }
@@ -234,33 +234,33 @@ Server → Client:
 ## Build Phases
 
 ### Phase 1: MVP (Core Pipeline)
-**Features**: Upload, CV line extraction (Canny), vectorize (ImageTracerJS), optimize (vpype), canvas sizing, SVG export  
-**Stack**: React + FastAPI + OpenCV + vpype  
+**Features**: Upload, CV line extraction (Canny), vectorize (ImageTracerJS), optimize (vpype), canvas sizing, SVG export
+**Stack**: React + FastAPI + OpenCV + vpype
 **Success**: Portrait → plotter-ready SVG in <10s
 
 ### Phase 2: ML Models + Presets
-**Features**: U²-Net segmentation, Informative Drawings/ControlNet, GPU (CUDA/MPS), auto presets, progress indicators  
-**Stack**: + PyTorch, WebSocket, Celery (optional)  
+**Features**: U²-Net segmentation, Informative Drawings/ControlNet, GPU (CUDA/MPS), auto presets, progress indicators
+**Stack**: + PyTorch, WebSocket, Celery (optional)
 **Success**: Better quality, auto mode works for 80% portraits
 
 ### Phase 3: Hatching + Multi-Color
-**Features**: Auto hatching for dark areas, K-means color quantization, per-color layers, layer visibility  
-**Stack**: + vpype-hatched or custom, color clustering  
+**Features**: Auto hatching for dark areas, K-means color quantization, per-color layers, layer visibility
+**Stack**: + vpype-hatched or custom, color clustering
 **Success**: Realistic shading, multi-color pen plotting
 
 ### Phase 4: Advanced Mode + Preview
-**Features**: Full parameter controls, real-time preview, line width visualization, pan/zoom, path stats  
-**Stack**: + React SVG Pan Zoom or Paper.js  
+**Features**: Full parameter controls, real-time preview, line width visualization, pan/zoom, path stats
+**Stack**: + React SVG Pan Zoom or Paper.js
 **Success**: Fine-tuning, accurate preview, iteration-friendly
 
 ### Phase 5: Export Formats + Presets
-**Features**: HPGL, G-code export, save/load presets, material templates  
-**Stack**: + vpype HPGL, G-code generator, localStorage  
+**Features**: HPGL, G-code export, save/load presets, material templates
+**Stack**: + vpype HPGL, G-code generator, localStorage
 **Success**: Works with AxiDraw, Cricut, lasers
 
 ### Phase 6: Polish + Deploy
-**Features**: Error handling, loading states, mobile-responsive, Docker, docs  
-**Stack**: Error boundaries, toast notifications, Compose  
+**Features**: Error handling, loading states, mobile-responsive, Docker, docs
+**Stack**: Error boundaries, toast notifications, Compose
 **Success**: Production-ready, professional UX
 
 ---

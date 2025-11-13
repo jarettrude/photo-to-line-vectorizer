@@ -4,35 +4,34 @@ API endpoints for photo-to-line-vectorizer.
 Implements REST endpoints for upload, processing, status, and download.
 """
 
-import asyncio
 import logging
+import re
 import uuid
 from pathlib import Path
-from typing import Dict
-import re
+from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, BackgroundTasks
+from config import settings
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pipeline.processor import PhotoToLineProcessor, ProcessingParams
 
 from api.models import (
+    JobStats,
     JobStatusResponse,
     ProcessingStatus,
-    ProcessParams,
     ProcessRequest,
     ProcessResponse,
     UploadResponse,
-    JobStats,
 )
-from config import settings
-from pipeline.processor import PhotoToLineProcessor, ProcessingParams
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-jobs: Dict[str, dict] = {}
+jobs: dict[str, dict[str, Any]] = {}
 
-processor = None
+# Module-level singleton to avoid global statement
+_processor: PhotoToLineProcessor | None = None
 
 # UUID validation pattern
 UUID_PATTERN = re.compile(
@@ -56,17 +55,17 @@ def validate_job_id(job_id: str) -> None:
 
 def get_processor() -> PhotoToLineProcessor:
     """Get or create the global processor instance."""
-    global processor
-    if processor is None:
-        processor = PhotoToLineProcessor(
+    global _processor  # noqa: PLW0603
+    if _processor is None:
+        _processor = PhotoToLineProcessor(
             u2net_model_path=settings.u2net_model_path,
         )
-    return processor
+    return _processor
 
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_image(
-    file: UploadFile = File(...),
+    file: UploadFile = File(...),  # noqa: B008
 ) -> UploadResponse:
     """
     Upload an image file for processing.
@@ -137,8 +136,8 @@ async def upload_image(
         )
 
     except Exception as e:
-        logger.error(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail="Upload failed")
+        logger.exception("Upload failed")
+        raise HTTPException(status_code=500, detail="Upload failed") from e
 
 
 async def process_job(job_id: str, params: ProcessingParams) -> None:
@@ -175,7 +174,7 @@ async def process_job(job_id: str, params: ProcessingParams) -> None:
         logger.info(f"Job {job_id} completed successfully")
 
     except Exception as e:
-        logger.error(f"Job {job_id} failed: {e}")
+        logger.exception("Job %s failed", job_id)
         job["status"] = ProcessingStatus.FAILED
         job["error"] = str(e)
 

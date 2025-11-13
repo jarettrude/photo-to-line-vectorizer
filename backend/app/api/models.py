@@ -107,9 +107,11 @@ class ProcessParams(BaseModel):
     @classmethod
     def validate_edge_threshold(cls, v: tuple[int, int]) -> tuple[int, int]:
         """Ensure low threshold is less than high threshold."""
+        max_threshold = 255
         low, high = v
-        if not (0 <= low < high <= 255):
-            raise ValueError("Edge threshold must be 0 <= low < high <= 255")
+        if not (0 <= low < high <= max_threshold):
+            msg = f"Edge threshold must be 0 <= low < high <= {max_threshold}"
+            raise ValueError(msg)
         return v
 
 

@@ -8,7 +8,6 @@ using the vpype library.
 import logging
 import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
 
 import vpype as vp
 
@@ -23,7 +22,7 @@ class VpypeOptimizer:
     and canvas sizing operations.
     """
 
-    def optimize(
+    def optimize(  # noqa: PLR0913
         self,
         svg_string: str,
         canvas_width_mm: float,
@@ -102,7 +101,7 @@ class VpypeOptimizer:
             tmp_path.unlink(missing_ok=True)
             output_path.unlink(missing_ok=True)
 
-    def get_stats(self, svg_string: str) -> dict:
+    def get_stats(self, svg_string: str) -> dict[str, float]:
         """
         Get statistics about SVG paths.
 
@@ -143,7 +142,7 @@ class VpypeOptimizer:
         svg_string: str,
         canvas_width_mm: float,
         canvas_height_mm: float,
-        maintain_aspect: bool = True,
+        maintain_aspect: bool = True,  # noqa: ARG002
     ) -> str:
         """
         Scale SVG to fit canvas dimensions.

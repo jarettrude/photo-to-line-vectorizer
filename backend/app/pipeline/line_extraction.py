@@ -6,18 +6,20 @@ Coordinates classical CV and ML-based line extraction methods.
 
 import logging
 from enum import Enum
-from typing import Optional
 
+import cv2
 import numpy as np
-
 from models.classical_cv import (
     BilateralCannyDetector,
     CannyEdgeDetector,
     XDoGExtractor,
     auto_canny,
 )
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
+
+RGB_CHANNELS = 3
 
 
 class LineExtractionMethod(str, Enum):
@@ -37,7 +39,7 @@ class LineExtractor:
     Supports multiple extraction methods with consistent API.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize line extractor with default methods."""
         self.canny = CannyEdgeDetector()
         self.bilateral_canny = BilateralCannyDetector()
@@ -45,11 +47,11 @@ class LineExtractor:
 
     def extract(
         self,
-        image: np.ndarray,
+        image: NDArray[np.uint8],
         method: LineExtractionMethod = LineExtractionMethod.AUTO,
-        low_threshold: Optional[int] = None,
-        high_threshold: Optional[int] = None,
-    ) -> np.ndarray:
+        low_threshold: int | None = None,
+        high_threshold: int | None = None,
+    ) -> NDArray[np.uint8]:
         """
         Extract line art from image using specified method.
 
@@ -67,39 +69,39 @@ class LineExtractor:
 
         if method == LineExtractionMethod.CANNY:
             if low_threshold and high_threshold:
-                detector = CannyEdgeDetector(low_threshold, high_threshold)
+                canny_detector = CannyEdgeDetector(low_threshold, high_threshold)
             else:
-                detector = self.canny
-            return detector.extract_lines(image)
+                canny_detector = self.canny
+            return canny_detector.extract_lines(image)
 
-        elif method == LineExtractionMethod.BILATERAL_CANNY:
+        if method == LineExtractionMethod.BILATERAL_CANNY:
             if low_threshold and high_threshold:
-                detector = BilateralCannyDetector(low_threshold, high_threshold)
+                bilateral_detector = BilateralCannyDetector(
+                    low_threshold, high_threshold
+                )
             else:
-                detector = self.bilateral_canny
-            return detector.extract_lines(image)
+                bilateral_detector = self.bilateral_canny
+            return bilateral_detector.extract_lines(image)
 
-        elif method == LineExtractionMethod.AUTO_CANNY:
-            import cv2
-
-            if len(image.shape) == 3:
-                gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        if method == LineExtractionMethod.AUTO_CANNY:
+            if len(image.shape) == RGB_CHANNELS:
+                gray: NDArray[np.uint8] = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  # type: ignore[assignment]
             else:
                 gray = image
             return auto_canny(gray)
 
-        elif method == LineExtractionMethod.XDOG:
+        if method == LineExtractionMethod.XDOG:
             return self.xdog.extract_lines(image)
 
-        else:
-            raise ValueError(f"Unknown extraction method: {method}")
+        msg = f"Unknown extraction method: {method}"
+        raise ValueError(msg)
 
     def extract_with_params(
         self,
-        image: np.ndarray,
+        image: NDArray[np.uint8],
         edge_threshold: tuple[int, int] = (50, 150),
         use_ml: bool = False,
-    ) -> np.ndarray:
+    ) -> NDArray[np.uint8]:
         """
         Extract lines with explicit parameters.
 

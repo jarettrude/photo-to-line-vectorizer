@@ -7,24 +7,32 @@ Uses pre-trained weights from the official repository.
 
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import cv2
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from PIL import Image
-
+import torch.nn.functional as F  # noqa: N812
+from numpy.typing import NDArray
+from torch import nn
 from utils.device import device_manager
 
 logger = logging.getLogger(__name__)
+
+RGB_CHANNELS = 3
 
 
 class REBNCONV(nn.Module):
     """ReLU + Batch Norm + Conv block."""
 
     def __init__(self, in_ch: int, out_ch: int, dirate: int = 1):
+        """
+        Initialize REBNCONV block.
+
+        Args:
+            in_ch: Number of input channels
+            out_ch: Number of output channels
+            dirate: Dilation rate for convolution
+        """
         super().__init__()
         self.conv_s1 = nn.Conv2d(
             in_ch, out_ch, 3, padding=1 * dirate, dilation=1 * dirate
@@ -32,14 +40,32 @@ class REBNCONV(nn.Module):
         self.bn_s1 = nn.BatchNorm2d(out_ch)
         self.relu_s1 = nn.ReLU(inplace=True)
 
-    def forward(self, x):
-        return self.relu_s1(self.bn_s1(self.conv_s1(x)))
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass through the block.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Output tensor after ReLU, batch norm, and convolution
+        """
+        result: torch.Tensor = self.relu_s1(self.bn_s1(self.conv_s1(x)))
+        return result
 
 
 class RSU7(nn.Module):
     """Residual U-block with 7 layers."""
 
     def __init__(self, in_ch: int, mid_ch: int, out_ch: int):
+        """
+        Initialize RSU7 block.
+
+        Args:
+            in_ch: Number of input channels
+            mid_ch: Number of middle channels
+            out_ch: Number of output channels
+        """
         super().__init__()
         self.rebnconvin = REBNCONV(in_ch, out_ch)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch)
@@ -61,7 +87,16 @@ class RSU7(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch * 2, mid_ch)
         self.rebnconv1d = REBNCONV(mid_ch * 2, out_ch)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass through RSU7 block.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Output tensor after residual U-block processing
+        """
         hx = x
         hxin = self.rebnconvin(hx)
         hx1 = self.rebnconv1(hxin)
@@ -97,13 +132,22 @@ class RSU7(nn.Module):
             hx2d, size=hx1.shape[2:], mode="bilinear", align_corners=False
         )
         hx1d = self.rebnconv1d(torch.cat((hx2dup, hx1), 1))
-        return hx1d + hxin
+        result: torch.Tensor = hx1d + hxin
+        return result
 
 
 class RSU4(nn.Module):
     """Residual U-block with 4 layers."""
 
     def __init__(self, in_ch: int, mid_ch: int, out_ch: int):
+        """
+        Initialize RSU4 block.
+
+        Args:
+            in_ch: Number of input channels
+            mid_ch: Number of middle channels
+            out_ch: Number of output channels
+        """
         super().__init__()
         self.rebnconvin = REBNCONV(in_ch, out_ch)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch)
@@ -117,7 +161,16 @@ class RSU4(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch * 2, mid_ch)
         self.rebnconv1d = REBNCONV(mid_ch * 2, out_ch)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass through RSU4 block.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Output tensor after residual U-block processing
+        """
         hx = x
         hxin = self.rebnconvin(hx)
         hx1 = self.rebnconv1(hxin)
@@ -136,13 +189,21 @@ class RSU4(nn.Module):
             hx2d, size=hx1.shape[2:], mode="bilinear", align_corners=False
         )
         hx1d = self.rebnconv1d(torch.cat((hx2dup, hx1), 1))
-        return hx1d + hxin
+        result: torch.Tensor = hx1d + hxin
+        return result
 
 
 class U2NETP(nn.Module):
     """U²-Net Portrait model architecture (lightweight version)."""
 
     def __init__(self, in_ch: int = 3, out_ch: int = 1):
+        """
+        Initialize U2NETP model.
+
+        Args:
+            in_ch: Number of input channels
+            out_ch: Number of output channels
+        """
         super().__init__()
         self.stage1 = RSU7(in_ch, 16, 64)
         self.pool12 = nn.MaxPool2d(2, stride=2, ceil_mode=True)
@@ -168,7 +229,27 @@ class U2NETP(nn.Module):
         self.side6 = nn.Conv2d(64, out_ch, 3, padding=1)
         self.outconv = nn.Conv2d(6, out_ch, 1)
 
-    def forward(self, x):
+    def forward(
+        self,
+        x: torch.Tensor,
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+    ]:
+        """
+        Forward pass through U2NETP model.
+
+        Args:
+            x: Input tensor of shape (B, C, H, W)
+
+        Returns:
+            Tuple of 7 output tensors (d0, d1, d2, d3, d4, d5, d6) with segmentation masks
+        """
         hx = x
         hx1 = self.stage1(hx)
         hx = self.pool12(hx1)
@@ -240,22 +321,28 @@ class U2NetPredictor:
             model_path: Path to .pth model weights file
         """
         self.model_path = model_path
-        self.model = U2NETP(3, 1)
+        self.model: nn.Module = U2NETP(3, 1)
         self._load_weights()
-        self.model = device_manager.to_device(self.model)
+        self.model = device_manager.to_device(self.model)  # type: ignore[assignment]
         self.model.eval()
         logger.info(f"U²-Net model loaded from {model_path}")
 
     def _load_weights(self) -> None:
-        """Load model weights from file with proper error handling."""
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"Model weights not found: {self.model_path}")
+        """
+        Load model weights from file with proper error handling.
 
-        state_dict = torch.load(self.model_path, map_location="cpu")
+        Raises:
+            FileNotFoundError: If model weights file doesn't exist
+        """
+        if not self.model_path.exists():
+            msg = f"Model weights not found: {self.model_path}"
+            raise FileNotFoundError(msg)
+
+        state_dict = torch.load(self.model_path, map_location="cpu", weights_only=True)
         self.model.load_state_dict(state_dict)
 
     @torch.no_grad()
-    def predict(self, image: np.ndarray) -> np.ndarray:
+    def predict(self, image: NDArray[np.uint8]) -> NDArray[np.uint8]:
         """
         Generate segmentation mask for input image.
 
@@ -267,19 +354,19 @@ class U2NetPredictor:
         """
         original_size = image.shape[:2]
         image_tensor = self._preprocess(image)
-        image_tensor = device_manager.to_device(image_tensor)
+        image_tensor_device: torch.Tensor = device_manager.to_device(image_tensor)  # type: ignore[assignment]
 
-        d0, *_ = self.model(image_tensor)
+        d0, *_ = self.model(image_tensor_device)
 
-        mask = d0[0, 0].cpu().numpy()
-        mask = (mask * 255).astype(np.uint8)
-        mask = cv2.resize(
+        mask_np: NDArray[np.float32] = d0[0, 0].cpu().numpy()
+        mask = (mask_np * 255).astype(np.uint8)
+        mask_resized: NDArray[np.uint8] = cv2.resize(  # type: ignore[assignment]
             mask, (original_size[1], original_size[0]), interpolation=cv2.INTER_LINEAR
         )
 
-        return mask
+        return mask_resized
 
-    def _preprocess(self, image: np.ndarray) -> torch.Tensor:
+    def _preprocess(self, image: NDArray[np.uint8]) -> torch.Tensor:
         """
         Preprocess image for model input.
 
@@ -289,15 +376,19 @@ class U2NetPredictor:
         Returns:
             Preprocessed tensor (1, 3, 512, 512)
         """
-        image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_LINEAR)
-        image = image.astype(np.float32) / 255.0
-        image = (image - np.array([0.485, 0.456, 0.406])) / np.array(
-            [0.229, 0.224, 0.225]
-        )
-        image = image.transpose(2, 0, 1)
-        return torch.from_numpy(image).unsqueeze(0).float()
+        resized: NDArray[np.uint8] = cv2.resize(
+            image, (512, 512), interpolation=cv2.INTER_LINEAR
+        )  # type: ignore[assignment]
+        normalized: NDArray[np.float32] = resized.astype(np.float32) / 255.0
+        standardized: NDArray[np.float32] = (
+            normalized - np.array([0.485, 0.456, 0.406])
+        ) / np.array([0.229, 0.224, 0.225])
+        transposed = standardized.transpose(2, 0, 1)
+        return torch.from_numpy(transposed).unsqueeze(0).float()
 
-    def isolate_subject(self, image: np.ndarray, threshold: int = 128) -> np.ndarray:
+    def isolate_subject(
+        self, image: NDArray[np.uint8], threshold: int = 128
+    ) -> NDArray[np.uint8]:
         """
         Extract subject from background using segmentation mask.
 
@@ -309,11 +400,11 @@ class U2NetPredictor:
             RGBA image with background removed (H, W, 4)
         """
         mask = self.predict(image)
-        mask_binary = (mask > threshold).astype(np.uint8) * 255
+        mask_binary: NDArray[np.uint8] = (mask > threshold).astype(np.uint8) * 255
 
-        if image.shape[2] == 3:
+        if image.shape[2] == RGB_CHANNELS:
             alpha = mask_binary
-            result = np.dstack((image, alpha))
+            result: NDArray[np.uint8] = np.dstack((image, alpha)).astype(np.uint8)
         else:
             result = image.copy()
             result[:, :, 3] = mask_binary

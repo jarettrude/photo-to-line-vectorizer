@@ -5,17 +5,18 @@ Converts bitmap line art to SVG paths using ImageTracerJS
 running in a Node.js subprocess.
 """
 
-import json
 import logging
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
+
+RGB_CHANNELS = 3
 
 
 class ImageTracerVectorizer:
@@ -26,7 +27,7 @@ class ImageTracerVectorizer:
     quality and simplification settings.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize vectorizer and verify ImageTracerJS availability."""
         self._check_availability()
 
@@ -35,6 +36,7 @@ class ImageTracerVectorizer:
         try:
             result = subprocess.run(
                 ["node", "--version"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -46,7 +48,7 @@ class ImageTracerVectorizer:
 
     def vectorize(
         self,
-        image: np.ndarray,
+        image: NDArray[np.uint8],
         line_threshold: int = 128,
         qtres: float = 1.0,
         pathomit: int = 8,
@@ -73,14 +75,13 @@ class ImageTracerVectorizer:
             cv2.imwrite(str(input_path), image)
 
         try:
-            svg_string = self._run_imagetracer(
+            return self._run_imagetracer(
                 input_path,
                 line_threshold,
                 qtres,
                 pathomit,
                 scale,
             )
-            return svg_string
         finally:
             input_path.unlink(missing_ok=True)
 
@@ -145,18 +146,21 @@ class ImageTracerVectorizer:
         try:
             result = subprocess.run(
                 ["node", str(script_path)],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
 
-            if result.returncode != 0:
-                raise RuntimeError(f"ImageTracerJS failed: {result.stderr}")
+            if result.returncode == 0:
+                return result.stdout
 
-            return result.stdout
+            msg = f"ImageTracerJS failed: {result.stderr}"
+            raise RuntimeError(msg)
 
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("ImageTracerJS timeout")
+        except subprocess.TimeoutExpired as err:
+            msg = "ImageTracerJS timeout"
+            raise RuntimeError(msg) from err
         finally:
             script_path.unlink(missing_ok=True)
 
@@ -168,7 +172,7 @@ class PotraceVectorizer:
     Uses Potrace via subprocess for GPL-safe isolation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Potrace vectorizer."""
         self._check_availability()
 
@@ -177,6 +181,7 @@ class PotraceVectorizer:
         try:
             result = subprocess.run(
                 ["potrace", "--version"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -188,7 +193,7 @@ class PotraceVectorizer:
 
     def vectorize(
         self,
-        image: np.ndarray,
+        image: NDArray[np.uint8],
         turdsize: int = 2,
         turnpolicy: str = "minority",
     ) -> str:
@@ -206,7 +211,7 @@ class PotraceVectorizer:
         with tempfile.NamedTemporaryFile(suffix=".pbm", delete=False) as tmp_input:
             input_path = Path(tmp_input.name)
 
-            if len(image.shape) == 3:
+            if len(image.shape) == RGB_CHANNELS:
                 gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             else:
                 gray = image
@@ -230,13 +235,15 @@ class PotraceVectorizer:
                     "-o",
                     str(output_path),
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"Potrace failed: {result.stderr}")
+                msg = f"Potrace failed: {result.stderr}"
+                raise RuntimeError(msg)
 
             return output_path.read_text()
 

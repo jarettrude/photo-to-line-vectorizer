@@ -1,6 +1,6 @@
 # Research: Photo-to-Line-Vectorizer Solutions
 
-**Last Updated**: November 12, 2025  
+**Last Updated**: November 12, 2025
 **Purpose**: Comprehensive survey of technologies, models, and libraries for converting photographs (portraits/animals) into plotter-friendly single-line SVG drawings.
 
 ---
@@ -10,7 +10,7 @@
 Convert photographs → detailed line art SVG suitable for:
 - Laser engravers
 - Pen plotters
-- Paint plotters  
+- Paint plotters
 - Cricut/vinyl cutters
 
 **Key Requirements**:
@@ -27,8 +27,8 @@ Convert photographs → detailed line art SVG suitable for:
 ## AI Models for Line Art Extraction
 
 ### 1. Informative Drawings (2022, MIT License)
-**Source**: https://github.com/carolineec/informative-drawings  
-**Paper**: "Learning to generate line drawings that convey geometry and semantics" (CVPR 2022)  
+**Source**: https://github.com/carolineec/informative-drawings
+**Paper**: "Learning to generate line drawings that convey geometry and semantics" (CVPR 2022)
 **License**: MIT ✅ Commercial-friendly
 
 **Capabilities**:
@@ -59,8 +59,8 @@ Convert photographs → detailed line art SVG suitable for:
 ---
 
 ### 2. ControlNet LineArt (v1.1, 2023, OpenRAIL-M)
-**Source**: https://huggingface.co/lllyasviel/control_v11p_sd15_lineart  
-**Paper**: "Adding Conditional Control to Text-to-Image Diffusion Models"  
+**Source**: https://huggingface.co/lllyasviel/control_v11p_sd15_lineart
+**Paper**: "Adding Conditional Control to Text-to-Image Diffusion Models"
 **License**: CreativeML OpenRAIL-M ✅ Commercial with conditions
 
 **Capabilities**:
@@ -92,8 +92,8 @@ Convert photographs → detailed line art SVG suitable for:
 ---
 
 ### 3. U²-Net / U²-Net Portrait (2020, Apache 2.0)
-**Source**: https://github.com/xuebinqin/U-2-Net  
-**Paper**: "U²-Net: Going Deeper with Nested U-Structure for Salient Object Detection"  
+**Source**: https://github.com/xuebinqin/U-2-Net
+**Paper**: "U²-Net: Going Deeper with Nested U-Structure for Salient Object Detection"
 **License**: Apache 2.0 ✅ Commercial-friendly
 
 **Capabilities**:
@@ -170,7 +170,7 @@ Convert photographs → detailed line art SVG suitable for:
 ## Vectorization Libraries
 
 ### 1. ImageTracerJS (Unlicense/Public Domain)
-**Source**: https://github.com/jankovicsandras/imagetracerjs  
+**Source**: https://github.com/jankovicsandras/imagetracerjs
 **License**: Unlicense ✅ Public domain
 
 **Capabilities**:
@@ -203,7 +203,7 @@ Convert photographs → detailed line art SVG suitable for:
 ---
 
 ### 2. Potrace (GPL v2)
-**Source**: https://potrace.sourceforge.net/  
+**Source**: https://potrace.sourceforge.net/
 **License**: GPL v2 ⚠️ Restrictive for proprietary software
 
 **Capabilities**:
@@ -233,7 +233,7 @@ Convert photographs → detailed line art SVG suitable for:
 ---
 
 ### 3. Vectorizer.AI (Proprietary SaaS)
-**Source**: https://vectorizer.ai/  
+**Source**: https://vectorizer.ai/
 **License**: Proprietary (API/web service)
 
 **Capabilities**:
@@ -258,7 +258,7 @@ Convert photographs → detailed line art SVG suitable for:
 ---
 
 ### 4. Linedraw by LingDong
-**Source**: https://github.com/LingDong-/linedraw  
+**Source**: https://github.com/LingDong-/linedraw
 **License**: Not explicitly stated (appears permissive)
 
 **Capabilities**:
@@ -291,7 +291,7 @@ Convert photographs → detailed line art SVG suitable for:
 ## Vector Optimization Tools
 
 ### vpype (MIT License)
-**Source**: https://vpype.readthedocs.io/ | https://pypi.org/project/vpype/  
+**Source**: https://vpype.readthedocs.io/ | https://pypi.org/project/vpype/
 **License**: MIT ✅ Commercial-friendly
 
 **Capabilities**:
@@ -341,7 +341,7 @@ Convert photographs → detailed line art SVG suitable for:
 ## Hatching & Shading Techniques
 
 ### 1. Eggbot Hatch Fill (Inkscape Extension)
-**Source**: Evil Mad Scientist Laboratories  
+**Source**: Evil Mad Scientist Laboratories
 **License**: Open source ✅
 
 **Capabilities**:
@@ -377,7 +377,7 @@ Convert photographs → detailed line art SVG suitable for:
 ## Single-Path / TSP Art Techniques
 
 ### TSP Art (Traveling Salesman Problem Art)
-**Source**: https://wiki.evilmadscientist.com/TSP_art  
+**Source**: https://wiki.evilmadscientist.com/TSP_art
 **License**: Open algorithms
 
 **Capabilities**:
@@ -433,7 +433,7 @@ Convert photographs → detailed line art SVG suitable for:
 ### Segment Anything Model (SAM) - Meta (2023)
 **License**: Apache 2.0 ✅
 
-**Use Case**: Subject segmentation (alternative to U²-Net)  
+**Use Case**: Subject segmentation (alternative to U²-Net)
 **Status**: Very large model, may be overkill
 
 ---
@@ -441,7 +441,7 @@ Convert photographs → detailed line art SVG suitable for:
 ### DINOv2 + Edge Detection
 **License**: Apache 2.0 ✅
 
-**Use Case**: Feature extraction → edge-aware processing  
+**Use Case**: Feature extraction → edge-aware processing
 **Status**: Experimental
 
 ---
@@ -449,7 +449,7 @@ Convert photographs → detailed line art SVG suitable for:
 ### Anime2Sketch / APDrawingGAN
 **License**: Varies (check repo)
 
-**Use Case**: Alternative line art generators  
+**Use Case**: Alternative line art generators
 **Status**: Older (2019-2020), less maintained
 
 ---
@@ -494,7 +494,7 @@ Convert photographs → detailed line art SVG suitable for:
 6. **Hatching**: vpype-hatched or custom algorithm
 7. **Output**: SVG with adjustable canvas size
 
-**Pros**: Best quality, semantic understanding  
+**Pros**: Best quality, semantic understanding
 **Cons**: GPU required, slower, heavier stack
 
 ---
@@ -508,7 +508,7 @@ Convert photographs → detailed line art SVG suitable for:
 6. **Hatching**: Scanline algorithm
 7. **Output**: SVG
 
-**Pros**: Faster, lighter, still good quality  
+**Pros**: Faster, lighter, still good quality
 **Cons**: Less "intelligent" line extraction
 
 ---
@@ -522,7 +522,7 @@ Convert photographs → detailed line art SVG suitable for:
 6. **Hatching**: Client-side algorithm
 7. **Output**: SVG
 
-**Pros**: Full privacy, no server needed, fast  
+**Pros**: Full privacy, no server needed, fast
 **Cons**: Limited by browser compute, lower quality
 
 ---

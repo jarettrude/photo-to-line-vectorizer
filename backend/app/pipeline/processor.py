@@ -7,19 +7,23 @@ optimization, and export.
 """
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
-
 from models.u2net import U2NetPredictor
+
 from pipeline.hatching import HatchGenerator
-from pipeline.line_extraction import LineExtractor, LineExtractionMethod
+from pipeline.line_extraction import LineExtractor
 from pipeline.optimize import VpypeOptimizer
 from pipeline.preprocess import ImagePreprocessor
-from pipeline.vectorize import ImageTracerVectorizer, PotraceVectorizer
+from pipeline.vectorize import ImageTracerVectorizer
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +53,17 @@ class ProcessingParams:
 
 @dataclass
 class ProcessingResult:
-    """Result of processing pipeline."""
+    """
+    Result of processing pipeline.
+
+    Attributes:
+        svg_content: Optimized SVG string
+        stats: Dictionary containing processing statistics
+        device_used: Name of device used for processing
+    """
 
     svg_content: str
-    stats: dict
+    stats: Mapping[str, float | int | tuple[float, float, float, float] | None]
     device_used: str
 
 
@@ -66,7 +77,7 @@ class PhotoToLineProcessor:
 
     def __init__(
         self,
-        u2net_model_path: Optional[Path] = None,
+        u2net_model_path: Path | None = None,
     ):
         """
         Initialize processor with models and pipeline components.
@@ -74,13 +85,13 @@ class PhotoToLineProcessor:
         Args:
             u2net_model_path: Optional path to U²-Net weights
         """
-        from utils.device import device_manager
+        from utils.device import device_manager  # noqa: PLC0415
 
         self.device_manager = device_manager
 
         if u2net_model_path and u2net_model_path.exists():
             logger.info("Loading U²-Net model...")
-            self.u2net = U2NetPredictor(u2net_model_path)
+            self.u2net: U2NetPredictor | None = U2NetPredictor(u2net_model_path)
             self.preprocessor = ImagePreprocessor(self.u2net)
         else:
             logger.warning("U²-Net model not found, subject isolation unavailable")
@@ -135,14 +146,17 @@ class PhotoToLineProcessor:
                 density_factor=params.hatch_density,
                 darkness_threshold=params.darkness_threshold,
             )
+            gray_image: NDArray[np.uint8] = cv2.cvtColor(
+                preprocessed, cv2.COLOR_RGB2GRAY
+            )  # type: ignore[assignment]
             edges = hatch_gen.add_hatching_to_edges(
                 edges,
-                cv2.cvtColor(preprocessed, cv2.COLOR_RGB2GRAY),
+                gray_image,
                 params.canvas_width_mm,
                 params.canvas_height_mm,
             )
 
-        edges_inverted = cv2.bitwise_not(edges)
+        edges_inverted: NDArray[np.uint8] = cv2.bitwise_not(edges)  # type: ignore[assignment]
 
         logger.info("Vectorizing...")
         svg_raw = self.vectorizer.vectorize(
@@ -161,7 +175,9 @@ class PhotoToLineProcessor:
             simplify_tolerance=params.simplify_tolerance,
         )
 
-        stats = self.optimizer.get_stats(svg_optimized)
+        stats: Mapping[str, float | int | tuple[float, float, float, float] | None] = (
+            self.optimizer.get_stats(svg_optimized)
+        )
 
         logger.info(f"Processing complete: {stats['path_count']} paths")
 
@@ -226,7 +242,8 @@ class PhotoToLineProcessor:
         }
 
         if preset not in presets:
-            raise ValueError(f"Unknown preset: {preset}")
+            msg = f"Unknown preset: {preset}"
+            raise ValueError(msg)
 
         params = presets[preset]
         return self.process(image_path, params)

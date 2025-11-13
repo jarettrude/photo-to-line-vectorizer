@@ -4,12 +4,12 @@ Tests for image preprocessing pipeline.
 Validates image loading, format support, and preprocessing operations.
 """
 
-import pytest
-import numpy as np
 import tempfile
 from pathlib import Path
-from PIL import Image
 
+import numpy as np
+import pytest
+from PIL import Image
 from pipeline.preprocess import ImagePreprocessor
 
 
@@ -83,7 +83,8 @@ def test_load_image_unsupported_format():
 def test_resize_if_needed_no_resize():
     """Test that small images are not resized."""
     preprocessor = ImagePreprocessor()
-    image = np.random.randint(0, 255, (500, 500, 3), dtype=np.uint8)
+    rng = np.random.default_rng(42)
+    image = rng.integers(0, 255, (500, 500, 3), dtype=np.uint8)
 
     resized = preprocessor.resize_if_needed(image, max_dimension=1000)
 
@@ -93,7 +94,8 @@ def test_resize_if_needed_no_resize():
 def test_resize_if_needed_width_exceeded():
     """Test resizing when width exceeds maximum."""
     preprocessor = ImagePreprocessor()
-    image = np.random.randint(0, 255, (500, 2000, 3), dtype=np.uint8)
+    rng = np.random.default_rng(42)
+    image = rng.integers(0, 255, (500, 2000, 3), dtype=np.uint8)
 
     resized = preprocessor.resize_if_needed(image, max_dimension=1000)
 
@@ -105,7 +107,8 @@ def test_resize_if_needed_width_exceeded():
 def test_resize_if_needed_height_exceeded():
     """Test resizing when height exceeds maximum."""
     preprocessor = ImagePreprocessor()
-    image = np.random.randint(0, 255, (2000, 500, 3), dtype=np.uint8)
+    rng = np.random.default_rng(42)
+    image = rng.integers(0, 255, (2000, 500, 3), dtype=np.uint8)
 
     resized = preprocessor.resize_if_needed(image, max_dimension=1000)
 
@@ -117,7 +120,8 @@ def test_resize_if_needed_height_exceeded():
 def test_normalize_contrast():
     """Test contrast normalization with CLAHE."""
     preprocessor = ImagePreprocessor()
-    image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+    rng = np.random.default_rng(42)
+    image = rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
 
     enhanced = preprocessor.normalize_contrast(image)
 

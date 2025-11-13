@@ -6,12 +6,18 @@ to line drawings.
 """
 
 import logging
-from typing import List, Tuple
 
 import cv2
 import numpy as np
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
+
+RGB_CHANNELS = 3
+ANGLE_45 = 45
+ANGLE_NEG_45 = -45
+ANGLE_0 = 0
+ANGLE_90 = 90
 
 
 class HatchGenerator:
@@ -45,11 +51,11 @@ class HatchGenerator:
 
     def generate_hatches(
         self,
-        image: np.ndarray,
+        image: NDArray[np.uint8],
         canvas_width_mm: float,
-        canvas_height_mm: float,
+        canvas_height_mm: float,  # noqa: ARG002
         angle: int = 45,
-    ) -> np.ndarray:
+    ) -> NDArray[np.uint8]:
         """
         Generate hatching lines for dark regions.
 
@@ -62,7 +68,7 @@ class HatchGenerator:
         Returns:
             Binary image with hatch lines
         """
-        if len(image.shape) == 3:
+        if len(image.shape) == RGB_CHANNELS:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray = image.copy()
@@ -76,16 +82,15 @@ class HatchGenerator:
         crosshatch_mask = np.zeros_like(gray)
 
         for i in range(0, max(h, w) * 2, spacing_px):
-            if angle == 45:
+            if angle == ANGLE_45:
                 cv2.line(hatch_mask, (-w, i), (i, -h), 255, 1)
-            elif angle == -45:
+            elif angle == ANGLE_NEG_45:
                 cv2.line(hatch_mask, (w * 2, i), (i, h * 2), 255, 1)
-            elif angle == 0:
+            elif angle == ANGLE_0:
                 if i < h:
                     cv2.line(hatch_mask, (0, i), (w, i), 255, 1)
-            elif angle == 90:
-                if i < w:
-                    cv2.line(hatch_mask, (i, 0), (i, h), 255, 1)
+            elif angle == ANGLE_90 and i < w:
+                cv2.line(hatch_mask, (i, 0), (i, h), 255, 1)
 
         dark_regions = gray < self.darkness_threshold
         hatching = np.where(dark_regions, hatch_mask, 0).astype(np.uint8)
@@ -94,26 +99,26 @@ class HatchGenerator:
             very_dark_regions = gray < self.crosshatch_threshold
 
             for i in range(0, max(h, w) * 2, spacing_px):
-                if angle == 45:
+                if angle == ANGLE_45:
                     cv2.line(crosshatch_mask, (w * 2, i), (i, h * 2), 255, 1)
-                elif angle == -45:
+                elif angle == ANGLE_NEG_45:
                     cv2.line(crosshatch_mask, (-w, i), (i, -h), 255, 1)
 
             crosshatching = np.where(very_dark_regions, crosshatch_mask, 0).astype(
                 np.uint8
             )
-            hatching = cv2.bitwise_or(hatching, crosshatching)
+            hatching = cv2.bitwise_or(hatching, crosshatching)  # type: ignore[assignment]
 
         logger.debug(f"Generated hatching with {np.sum(hatching > 0)} pixels")
         return hatching
 
     def add_hatching_to_edges(
         self,
-        edges: np.ndarray,
-        original_image: np.ndarray,
+        edges: NDArray[np.uint8],
+        original_image: NDArray[np.uint8],
         canvas_width_mm: float,
         canvas_height_mm: float,
-    ) -> np.ndarray:
+    ) -> NDArray[np.uint8]:
         """
         Combine edge detection with hatching.
 
@@ -133,7 +138,7 @@ class HatchGenerator:
             angle=45,
         )
 
-        combined = cv2.bitwise_or(edges, hatching)
+        combined: NDArray[np.uint8] = cv2.bitwise_or(edges, hatching)  # type: ignore[assignment]
 
         logger.info("Hatching added to edges")
         return combined

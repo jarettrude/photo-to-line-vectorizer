@@ -17,14 +17,14 @@
 ### Python Syntax Guidelines:
 - Always import the children of `datetime` I.E. `from datetime import date` - NEVER `import datetime` and `datetime.date`.
 - All imports should be relative to ./src - this means NEVER `from src.x import y` - ALWAYS `from x import y`
-- 
+-
 ### Documentation Guidelines:
 - Markdown documentation should be concise and written in a manner in which you could reconstruct the described code therefrom with 95% accuracy but with minimal snippets. It should be a clear architectural summary, not usage examples (that's what Swagger and Strawberry are for).
 
 ## Running Tests
 When presented with a "_test" file, run the file using the command:
 
-`source ./.venv.linux/bin/activate && python -m pytest (your test path) -v --lf` 
+`source ./.venv.linux/bin/activate && python -m pytest (your test path) -v --lf`
 
 and repair any deficiencies starting with the easiest, most common or "lowest hanging fruit".
 
@@ -59,7 +59,7 @@ This is a **FastAPI-based server framework** with a layered architecture designe
 
 Each entity follows a three-model pattern:
 - **Entity Model**: Core attributes and validation
-- **Reference Model**: Relationships to other entities  
+- **Reference Model**: Relationships to other entities
 - **Network Model**: API schemas (POST, PUT, SEARCH, Response classes)
 
 

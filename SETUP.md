@@ -146,7 +146,6 @@ pre-commit run frontend-build --all-files
 ### Bypassing Hooks (NOT RECOMMENDED)
 
 ```bash
-# Only use in emergencies
 git commit --no-verify -m "Emergency commit"
 ```
 
