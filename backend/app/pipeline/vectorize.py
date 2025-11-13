@@ -5,6 +5,7 @@ Converts bitmap line art to SVG paths using ImageTracerJS
 running in a Node.js subprocess.
 """
 
+import json
 import logging
 import subprocess
 import tempfile

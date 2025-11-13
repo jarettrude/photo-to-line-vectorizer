@@ -13,6 +13,7 @@ from typing import Any
 from config import settings
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pipeline.export import PlotterExporter
 from pipeline.processor import PhotoToLineProcessor, ProcessingParams
 
 from api.models import (
@@ -110,7 +111,7 @@ async def upload_image(
         # Check file size
         file_size_mb = len(content) / (1024 * 1024)
         if file_size_mb > settings.max_upload_size_mb:
-            raise HTTPException(
+            raise HTTPException(  # noqa: TRY301
                 status_code=413,
                 detail=f"File too large: {file_size_mb:.1f}MB (max: {settings.max_upload_size_mb}MB)",
             )
@@ -297,13 +298,13 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
 
 
 @router.get("/download/{job_id}")
-async def download_result(job_id: str, format: str = "svg") -> FileResponse:
+async def download_result(job_id: str, export_format: str = "svg") -> FileResponse:
     """
     Download processed result in specified format.
 
     Args:
         job_id: Job identifier
-        format: Export format (svg, hpgl, gcode)
+        export_format: Export format (svg, hpgl, gcode)
 
     Returns:
         File in requested format
@@ -327,7 +328,7 @@ async def download_result(job_id: str, format: str = "svg") -> FileResponse:
     if not job["output_path"] or not job["output_path"].exists():
         raise HTTPException(status_code=404, detail="Result file not found")
 
-    format_lower = format.lower()
+    format_lower = export_format.lower()
 
     # For SVG, return the stored file directly
     if format_lower == "svg":
@@ -338,8 +339,6 @@ async def download_result(job_id: str, format: str = "svg") -> FileResponse:
         )
 
     # For other formats, convert on-the-fly
-    from pipeline.export import PlotterExporter
-
     exporter = PlotterExporter()
     svg_content = job["output_path"].read_text()
 
@@ -354,7 +353,7 @@ async def download_result(job_id: str, format: str = "svg") -> FileResponse:
     export_path = settings.results_dir / f"{job_id}{export_ext}"
 
     try:
-        exporter.export_to_format(svg_content, export_path, format=format_lower)
+        exporter.export_to_format(svg_content, export_path, export_format=format_lower)
 
         media_type = {
             "hpgl": "application/octet-stream",
@@ -370,6 +369,6 @@ async def download_result(job_id: str, format: str = "svg") -> FileResponse:
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=f"Export failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {e}") from e

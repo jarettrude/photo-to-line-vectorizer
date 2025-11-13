@@ -7,10 +7,8 @@ Supports SVG, HPGL, and G-code export using vpype.
 import logging
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import vpype as vp
-from vpype_cli import execute
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +40,17 @@ class PlotterExporter:
             tmp.write(svg_string)
 
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
-            vp.write_svg(str(output_path), doc, color_mode=layer_mode)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, page_w, page_h = result
+
+            # Create Document for writing
+            doc = vp.Document()
+            doc.add(lc, 1)  # Add to layer 1
+            doc.page_size = (page_w, page_h)
+
+            with output_path.open("w") as f:
+                vp.write_svg(f, doc, color_mode=layer_mode)
             logger.info(f"Exported SVG to {output_path}")
 
         finally:
@@ -53,9 +60,9 @@ class PlotterExporter:
         self,
         svg_string: str,
         output_path: Path,
-        device: str = "hp7475a",
-        velocity: Optional[int] = None,
-        force: Optional[int] = None,
+        device: str = "hp7475a",  # noqa: ARG002
+        velocity: int | None = None,
+        force: int | None = None,
     ) -> None:
         """
         Export to HPGL format for pen plotters.
@@ -75,7 +82,9 @@ class PlotterExporter:
             tmp.write(svg_string)
 
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, _, _ = result
 
             # Build HPGL command
             hpgl_content = []
@@ -92,24 +101,19 @@ class PlotterExporter:
             # Select pen
             hpgl_content.append("SP1;")  # Select pen 1
 
-            # Export paths
-            for layer_id in sorted(doc.layers.keys()):
-                layer = doc.layers[layer_id]
+            # Export paths - LineCollection is iterable of lines
+            for line in lc:
+                if len(line) == 0:
+                    continue
 
-                for line in layer:
-                    if len(line) == 0:
-                        continue
+                # Move to first point (pen up)
+                x, y = line[0].real, line[0].imag
+                hpgl_content.append(f"PU{int(x)},{int(y)};")
 
-                    # Move to first point (pen up)
-                    x, y = line[0].real, line[0].imag
-                    hpgl_content.append(f"PU{int(x)},{int(y)};")
-
-                    # Draw subsequent points (pen down)
-                    if len(line) > 1:
-                        points = ",".join(
-                            f"{int(p.real)},{int(p.imag)}" for p in line[1:]
-                        )
-                        hpgl_content.append(f"PD{points};")
+                # Draw subsequent points (pen down)
+                if len(line) > 1:
+                    points = ",".join(f"{int(p.real)},{int(p.imag)}" for p in line[1:])
+                    hpgl_content.append(f"PD{points};")
 
             # End plotter commands
             hpgl_content.append("PU;")  # Pen up
@@ -119,15 +123,16 @@ class PlotterExporter:
             logger.info(f"Exported HPGL to {output_path}")
 
         except Exception as e:
-            raise RuntimeError(f"HPGL export failed: {e}")
+            error_msg = f"HPGL export failed: {e}"
+            raise RuntimeError(error_msg) from e
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    def export_gcode(
+    def export_gcode(  # noqa: PLR0913
         self,
         svg_string: str,
         output_path: Path,
-        profile: str = "gcode",
+        profile: str = "gcode",  # noqa: ARG002
         feed_rate: int = 1000,
         z_up: float = 5.0,
         z_down: float = 0.0,
@@ -152,9 +157,11 @@ class PlotterExporter:
 
         try:
             # Use vpype-gcode plugin
-            from vpype_gcode import gwrite
+            from vpype_gcode import gwrite  # type: ignore[import-untyped]  # noqa: PLC0415, F401
 
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, _, _ = result
 
             # Generate G-code
             gcode_lines = []
@@ -171,24 +178,21 @@ class PlotterExporter:
                 ]
             )
 
-            # Export paths
-            for layer_id in sorted(doc.layers.keys()):
-                layer = doc.layers[layer_id]
+            # Export paths - LineCollection is iterable of lines
+            for line in lc:
+                if len(line) == 0:
+                    continue
 
-                for line in layer:
-                    if len(line) == 0:
-                        continue
+                # Move to first point with pen up
+                x0, y0 = line[0].real, line[0].imag
+                gcode_lines.append(f"G0 Z{z_up}")
+                gcode_lines.append(f"G0 X{x0:.3f} Y{y0:.3f}")
+                gcode_lines.append(f"G1 Z{z_down}")
 
-                    # Move to first point with pen up
-                    x0, y0 = line[0].real, line[0].imag
-                    gcode_lines.append(f"G0 Z{z_up}")
-                    gcode_lines.append(f"G0 X{x0:.3f} Y{y0:.3f}")
-                    gcode_lines.append(f"G1 Z{z_down}")
-
-                    # Draw subsequent points with pen down
-                    for point in line[1:]:
-                        x, y = point.real, point.imag
-                        gcode_lines.append(f"G1 X{x:.3f} Y{y:.3f}")
+                # Draw subsequent points with pen down
+                for point in line[1:]:
+                    x, y = point.real, point.imag
+                    gcode_lines.append(f"G1 X{x:.3f} Y{y:.3f}")
 
             # Footer
             gcode_lines.extend(
@@ -203,11 +207,13 @@ class PlotterExporter:
             output_path.write_text("\n".join(gcode_lines))
             logger.info(f"Exported G-code to {output_path}")
 
-        except ImportError:
-            logger.error("vpype-gcode plugin not available")
-            raise RuntimeError("vpype-gcode plugin required for G-code export")
+        except ImportError as e:
+            logger.exception("vpype-gcode plugin not available")
+            error_msg = "vpype-gcode plugin required for G-code export"
+            raise RuntimeError(error_msg) from e
         except Exception as e:
-            raise RuntimeError(f"G-code export failed: {e}")
+            error_msg = f"G-code export failed: {e}"
+            raise RuntimeError(error_msg) from e
         finally:
             tmp_path.unlink(missing_ok=True)
 
@@ -215,8 +221,8 @@ class PlotterExporter:
         self,
         svg_string: str,
         output_path: Path,
-        format: str = "svg",
-        **kwargs,
+        export_format: str = "svg",
+        **kwargs: object,
     ) -> None:
         """
         Export to specified format.
@@ -224,21 +230,22 @@ class PlotterExporter:
         Args:
             svg_string: Input SVG string
             output_path: Output file path
-            format: Export format (svg, hpgl, gcode)
+            export_format: Export format (svg, hpgl, gcode)
             **kwargs: Format-specific parameters
 
         Raises:
             ValueError: If format is unsupported
         """
-        format_lower = format.lower()
+        format_lower = export_format.lower()
 
         if format_lower == "svg":
-            self.export_svg(svg_string, output_path, **kwargs)
+            self.export_svg(svg_string, output_path, **kwargs)  # type: ignore[arg-type]
         elif format_lower == "hpgl":
-            self.export_hpgl(svg_string, output_path, **kwargs)
+            self.export_hpgl(svg_string, output_path, **kwargs)  # type: ignore[arg-type]
         elif format_lower in ("gcode", "g-code", "nc"):
-            self.export_gcode(svg_string, output_path, **kwargs)
+            self.export_gcode(svg_string, output_path, **kwargs)  # type: ignore[arg-type]
         else:
-            raise ValueError(f"Unsupported export format: {format}")
+            error_msg = f"Unsupported export format: {export_format}"
+            raise ValueError(error_msg)
 
         logger.info(f"Exported to {format_lower.upper()}: {output_path}")

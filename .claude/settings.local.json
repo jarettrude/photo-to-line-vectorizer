@@ -12,7 +12,11 @@
       "Bash(npm run type-check:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(python -m ruff check:*)",
+      "Bash(python:*)",
+      "Bash(cat:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

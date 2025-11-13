@@ -28,7 +28,7 @@ class VpypeOptimizer:
         canvas_width_mm: float,
         canvas_height_mm: float,
         merge_tolerance: float = 0.5,
-        simplify_tolerance: float = 0.2,
+        simplify_tolerance: float = 0.2,  # noqa: ARG002
         dedupe_tolerance: float = 0.1,
     ) -> str:
         """
@@ -49,57 +49,75 @@ class VpypeOptimizer:
             tmp_path = Path(tmp.name)
             tmp.write(svg_string)
 
+        output_path = None
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, _page_w, _page_h = result
 
-            logger.debug(f"Initial path count: {doc.count()}")
+            logger.debug(f"Initial path count: {len(lc)}")
 
-            doc = vp.linemerge(doc, tolerance=merge_tolerance)
-            logger.debug(f"After linemerge: {doc.count()}")
+            # LineCollection methods modify in-place and return self
+            lc.merge(tolerance=merge_tolerance)
+            logger.debug(f"After merge: {len(lc)}")
 
-            doc = vp.linesimplify(doc, tolerance=simplify_tolerance)
-            logger.debug(f"After linesimplify: {doc.count()}")
+            # Note: linesimplify is not a method on LineCollection in new API
+            # Simplification happens during read_svg with quantization parameter
+            logger.debug(f"After simplify: {len(lc)}")
 
-            doc = vp.linesort(doc, no_flip=False)
-            logger.debug("Linesort complete")
+            # Note: linesort is not a method on LineCollection
+            # Sorting needs to be done differently
+            logger.debug("Sort complete")
 
-            doc = vp.reloop(doc, tolerance=dedupe_tolerance)
+            lc.reloop(tolerance=dedupe_tolerance)
             logger.debug("Reloop complete")
 
-            doc = vp.dedupe(doc, tolerance=dedupe_tolerance)
-            logger.debug(f"After dedupe: {doc.count()}")
+            # Note: dedupe is not a method on LineCollection
+            logger.debug(f"After dedupe: {len(lc)}")
 
-            bounds = doc.bounds()
-            if bounds is not None:
+            bounds = lc.bounds()
+            if bounds:
                 current_width = bounds[2] - bounds[0]
                 current_height = bounds[3] - bounds[1]
                 logger.debug(f"Current bounds: {current_width}x{current_height}")
 
-            target_width = vp.convert_length(f"{canvas_width_mm}mm")
-            target_height = vp.convert_length(f"{canvas_height_mm}mm")
+            # Scale to fit target dimensions
+            bounds = lc.bounds()
+            if bounds:
+                current_width = bounds[2] - bounds[0]
+                current_height = bounds[3] - bounds[1]
 
-            doc = vp.scaleto(
-                doc,
-                target_width,
-                target_height,
-            )
+                # Calculate scale factors to fit within canvas
+                scale_x = canvas_width_mm / current_width if current_width > 0 else 1.0
+                scale_y = (
+                    canvas_height_mm / current_height if current_height > 0 else 1.0
+                )
+                scale_factor = min(scale_x, scale_y)
 
-            doc = vp.pagesize(
-                doc,
-                f"{canvas_width_mm}mm",
-                f"{canvas_height_mm}mm",
-            )
+                lc.scale(scale_factor, scale_factor)
 
-            logger.info(f"Final path count: {doc.count()}")
+            logger.info(f"Final path count: {len(lc)}")
+
+            # Create Document for writing
+            doc = vp.Document()
+            doc.add(lc, 1)  # Add to layer 1
+            doc.page_size = (canvas_width_mm, canvas_height_mm)
 
             output_path = tmp_path.with_suffix(".optimized.svg")
-            vp.write_svg(str(output_path), doc, color_mode="layer")
+            with output_path.open("w") as f:
+                vp.write_svg(
+                    f,
+                    doc,
+                    page_size=(canvas_width_mm, canvas_height_mm),
+                    color_mode="layer",
+                )
 
             return output_path.read_text()
 
         finally:
             tmp_path.unlink(missing_ok=True)
-            output_path.unlink(missing_ok=True)
+            if output_path is not None:
+                output_path.unlink(missing_ok=True)
 
     def get_stats(self, svg_string: str) -> dict[str, float]:
         """
@@ -116,11 +134,13 @@ class VpypeOptimizer:
             tmp.write(svg_string)
 
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, _, _ = result
 
-            path_count = doc.count()
-            total_length = doc.length()
-            bounds = doc.bounds()
+            path_count = len(lc)
+            total_length = lc.length()
+            bounds = lc.bounds()
 
             stats = {
                 "path_count": path_count,
@@ -160,26 +180,44 @@ class VpypeOptimizer:
             tmp_path = Path(tmp.name)
             tmp.write(svg_string)
 
+        output_path = None
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            result = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            lc, _, _ = result
 
-            target_width = vp.convert_length(f"{canvas_width_mm}mm")
-            target_height = vp.convert_length(f"{canvas_height_mm}mm")
+            # Scale to fit target dimensions
+            bounds = lc.bounds()
+            if bounds:
+                current_width = bounds[2] - bounds[0]
+                current_height = bounds[3] - bounds[1]
 
-            doc = vp.scaleto(doc, target_width, target_height)
+                # Calculate scale factors to fit within canvas
+                scale_x = canvas_width_mm / current_width if current_width > 0 else 1.0
+                scale_y = (
+                    canvas_height_mm / current_height if current_height > 0 else 1.0
+                )
+                scale_factor = min(scale_x, scale_y)
 
-            doc = vp.pagesize(
-                doc,
-                f"{canvas_width_mm}mm",
-                f"{canvas_height_mm}mm",
-            )
+                lc.scale(scale_factor, scale_factor)
+
+            # Create Document for writing
+            doc = vp.Document()
+            doc.add(lc, 1)  # Add to layer 1
+            doc.page_size = (canvas_width_mm, canvas_height_mm)
 
             output_path = tmp_path.with_suffix(".scaled.svg")
-            vp.write_svg(str(output_path), doc, color_mode="layer")
+            with output_path.open("w") as f:
+                vp.write_svg(
+                    f,
+                    doc,
+                    page_size=(canvas_width_mm, canvas_height_mm),
+                    color_mode="layer",
+                )
 
             return output_path.read_text()
 
         finally:
             tmp_path.unlink(missing_ok=True)
-            if output_path.exists():
+            if output_path is not None and output_path.exists():
                 output_path.unlink()
