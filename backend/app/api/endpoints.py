@@ -9,6 +9,7 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Dict
+import re
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -32,6 +33,25 @@ router = APIRouter()
 jobs: Dict[str, dict] = {}
 
 processor = None
+
+# UUID validation pattern
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
+
+
+def validate_job_id(job_id: str) -> None:
+    """
+    Validate job ID format.
+
+    Args:
+        job_id: Job identifier to validate
+
+    Raises:
+        HTTPException: If job_id is not a valid UUID
+    """
+    if not UUID_PATTERN.match(job_id):
+        raise HTTPException(status_code=400, detail="Invalid job ID format")
 
 
 def get_processor() -> PhotoToLineProcessor:
@@ -87,6 +107,15 @@ async def upload_image(
 
     try:
         content = await file.read()
+
+        # Check file size
+        file_size_mb = len(content) / (1024 * 1024)
+        if file_size_mb > settings.max_upload_size_mb:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large: {file_size_mb:.1f}MB (max: {settings.max_upload_size_mb}MB)",
+            )
+
         file_path.write_bytes(content)
 
         jobs[job_id] = {
@@ -172,6 +201,8 @@ async def process_image(
     Raises:
         HTTPException: If job not found or parameters invalid
     """
+    validate_job_id(request.job_id)
+
     if request.job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -229,6 +260,8 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
     Raises:
         HTTPException: If job not found
     """
+    validate_job_id(job_id)
+
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -265,19 +298,22 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
 
 
 @router.get("/download/{job_id}")
-async def download_result(job_id: str) -> FileResponse:
+async def download_result(job_id: str, format: str = "svg") -> FileResponse:
     """
-    Download processed SVG result.
+    Download processed result in specified format.
 
     Args:
         job_id: Job identifier
+        format: Export format (svg, hpgl, gcode)
 
     Returns:
-        SVG file
+        File in requested format
 
     Raises:
         HTTPException: If job not found or not complete
     """
+    validate_job_id(job_id)
+
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -292,8 +328,49 @@ async def download_result(job_id: str) -> FileResponse:
     if not job["output_path"] or not job["output_path"].exists():
         raise HTTPException(status_code=404, detail="Result file not found")
 
-    return FileResponse(
-        job["output_path"],
-        media_type="image/svg+xml",
-        filename=f"{job['filename']}.svg",
-    )
+    format_lower = format.lower()
+
+    # For SVG, return the stored file directly
+    if format_lower == "svg":
+        return FileResponse(
+            job["output_path"],
+            media_type="image/svg+xml",
+            filename=f"{job['filename']}.svg",
+        )
+
+    # For other formats, convert on-the-fly
+    from pipeline.export import PlotterExporter
+
+    exporter = PlotterExporter()
+    svg_content = job["output_path"].read_text()
+
+    # Create export file path
+    export_ext = {
+        "hpgl": ".hpgl",
+        "gcode": ".gcode",
+        "g-code": ".gcode",
+        "nc": ".nc",
+    }.get(format_lower, f".{format_lower}")
+
+    export_path = settings.results_dir / f"{job_id}{export_ext}"
+
+    try:
+        exporter.export_to_format(svg_content, export_path, format=format_lower)
+
+        media_type = {
+            "hpgl": "application/octet-stream",
+            "gcode": "text/plain",
+            "g-code": "text/plain",
+            "nc": "text/plain",
+        }.get(format_lower, "application/octet-stream")
+
+        return FileResponse(
+            export_path,
+            media_type=media_type,
+            filename=f"{job['filename']}{export_ext}",
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {e}")
