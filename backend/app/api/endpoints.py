@@ -7,11 +7,18 @@ business logic is delegated to service layer.
 
 import logging
 import re
-from pathlib import Path
 
 from config import settings
 from dependencies import get_job_service
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 from pipeline.export import PlotterExporter
 from services.job_service import JobService
@@ -133,7 +140,7 @@ async def process_job_background(
     except HTTPException:
         # Already handled by service layer
         pass
-    except Exception as e:
+    except Exception:
         logger.exception(f"Background processing failed for job {job_id}")
 
 
@@ -168,10 +175,10 @@ async def process_image(
     # Verify job exists and is in correct state
     job = job_service.get_job(body.job_id)
 
-    if job.status != ProcessingStatus.PENDING:
+    if job["status"] != ProcessingStatus.PENDING.value:
         raise HTTPException(
             status_code=400,
-            detail=f"Job already {job.status.value}",
+            detail=f"Job already {job['status']}",
         )
 
     # Add background task
@@ -259,7 +266,7 @@ async def download_result(
         return FileResponse(
             output_path,
             media_type="image/svg+xml",
-            filename=f"{job.filename}.svg",
+            filename=f"{job['filename']}.svg",
         )
 
     # For other formats, convert on-the-fly
@@ -289,7 +296,7 @@ async def download_result(
         return FileResponse(
             export_path,
             media_type=media_type,
-            filename=f"{job.filename}{export_ext}",
+            filename=f"{job['filename']}{export_ext}",
         )
 
     except ValueError as e:

@@ -1,7 +1,7 @@
 """
 Job service for business logic orchestration.
 
-Coordinates between repository, processor, and other components.
+Coordinates between storage, processor, and other components.
 Handles all business rules and validations.
 """
 
@@ -9,11 +9,11 @@ import logging
 import uuid
 from pathlib import Path
 
-from fastapi import HTTPException, UploadFile
-from repositories.job_repository import Job, JobRepository
 from api.models import ProcessingStatus
-from pipeline.processor import PhotoToLineProcessor, ProcessingParams, ProcessingResult
 from config import settings
+from fastapi import HTTPException, UploadFile
+from pipeline.processor import PhotoToLineProcessor, ProcessingParams, ProcessingResult
+from storage import JobStorage
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +26,15 @@ class JobService:
     Contains all business logic separated from API layer.
     """
 
-    def __init__(self, repository: JobRepository, processor: PhotoToLineProcessor):
+    def __init__(self, storage: JobStorage, processor: PhotoToLineProcessor):
         """
         Initialize job service.
 
         Args:
-            repository: Job repository for data access
+            storage: Job storage for data access
             processor: Photo processing pipeline
         """
-        self.repository = repository
+        self.storage = storage
         self.processor = processor
 
     async def create_job_from_upload(
@@ -92,15 +92,13 @@ class JobService:
             # Save file
             file_path.write_bytes(content)
 
-            # Create job in repository
-            job = Job(
+            # Create job in storage
+            self.storage.create_job(
                 job_id=job_id,
                 filename=file.filename,
                 input_path=file_path,
                 status=ProcessingStatus.PENDING,
             )
-
-            self.repository.create(job)
 
             logger.info(
                 f"Created job {job_id} for file {file.filename} ({file_size_mb:.1f}MB)"
@@ -115,7 +113,7 @@ class JobService:
             logger.exception("Job creation failed")
             raise HTTPException(status_code=500, detail="Upload failed") from e
 
-    def get_job(self, job_id: str) -> Job:
+    def get_job(self, job_id: str) -> dict:
         """
         Get job by ID.
 
@@ -123,12 +121,12 @@ class JobService:
             job_id: Job identifier
 
         Returns:
-            Job instance
+            Job data dictionary
 
         Raises:
             HTTPException: If job not found
         """
-        job = self.repository.get_by_id(job_id)
+        job = self.storage.get_job(job_id)
 
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -149,29 +147,28 @@ class JobService:
         Raises:
             HTTPException: If job not found or invalid state
         """
-        # Get job from repository
-        job = self.repository.get_by_id(job_id)
+        # Get job from storage
+        job = self.storage.get_job(job_id)
 
         if not job:
             logger.error(f"Job {job_id} not found")
             raise HTTPException(status_code=404, detail="Job not found")
 
-        if job.status != ProcessingStatus.PENDING:
+        if job["status"] != ProcessingStatus.PENDING.value:
             raise HTTPException(
                 status_code=400,
-                detail=f"Job already {job.status.value}",
+                detail=f"Job already {job['status']}",
             )
 
         # Update status to processing
-        job.status = ProcessingStatus.PROCESSING
-        self.repository.update(job)
+        self.storage.set_status(job_id, ProcessingStatus.PROCESSING)
 
         logger.info(f"Starting processing for job {job_id}")
 
         try:
             # Execute processing pipeline
             result: ProcessingResult = self.processor.process(
-                image_path=job.input_path,
+                image_path=Path(job["input_path"]),
                 params=params,
             )
 
@@ -180,15 +177,15 @@ class JobService:
             output_path.write_text(result.svg_content)
 
             # Update job with results
-            job.output_path = output_path
-            job.status = ProcessingStatus.COMPLETED
-            job.stats = dict(result.stats)
-            job.device_used = result.device_used
-
-            self.repository.update(job)
+            self.storage.set_result(
+                job_id=job_id,
+                output_path=output_path,
+                stats=dict(result.stats),
+                device_used=result.device_used,
+            )
 
             logger.info(
-                f"Job {job_id} completed: {job.stats.get('path_count', 0)} paths, "
+                f"Job {job_id} completed: {result.stats.get('path_count', 0)} paths, "
                 f"device={result.device_used}"
             )
 
@@ -196,9 +193,7 @@ class JobService:
             logger.exception(f"Job {job_id} failed")
 
             # Update job with error
-            job.status = ProcessingStatus.FAILED
-            job.error = str(e)
-            self.repository.update(job)
+            self.storage.set_status(job_id, ProcessingStatus.FAILED, error=str(e))
 
             raise HTTPException(
                 status_code=500, detail=f"Processing failed: {e}"
@@ -221,24 +216,24 @@ class JobService:
 
         # Calculate progress
         progress = 0
-        if job.status == ProcessingStatus.PROCESSING:
+        if job["status"] == ProcessingStatus.PROCESSING.value:
             progress = 50
-        elif job.status == ProcessingStatus.COMPLETED:
+        elif job["status"] == ProcessingStatus.COMPLETED.value:
             progress = 100
 
         # Build result URL
         result_url = None
-        if job.output_path:
+        if job.get("output_path"):
             result_url = f"/api/download/{job_id}"
 
         return {
-            "job_id": job.job_id,
-            "status": job.status,
+            "job_id": job["job_id"],
+            "status": ProcessingStatus(job["status"]),
             "progress": progress,
             "result_url": result_url,
-            "stats": job.stats,
-            "error": job.error,
-            "device_used": job.device_used,
+            "stats": job.get("stats"),
+            "error": job.get("error"),
+            "device_used": job.get("device_used"),
         }
 
     def get_result_path(self, job_id: str) -> Path:
@@ -256,16 +251,18 @@ class JobService:
         """
         job = self.get_job(job_id)
 
-        if job.status != ProcessingStatus.COMPLETED:
+        if job["status"] != ProcessingStatus.COMPLETED.value:
             raise HTTPException(
                 status_code=400,
                 detail="Job not completed",
             )
 
-        if not job.output_path or not job.output_path.exists():
+        output_path = Path(job["output_path"]) if job.get("output_path") else None
+
+        if not output_path or not output_path.exists():
             raise HTTPException(status_code=404, detail="Result file not found")
 
-        return job.output_path
+        return output_path
 
     def delete_job(self, job_id: str) -> bool:
         """
@@ -277,21 +274,23 @@ class JobService:
         Returns:
             True if deleted successfully
         """
-        job = self.repository.get_by_id(job_id)
+        job = self.storage.get_job(job_id)
 
         if not job:
             return False
 
         # Clean up files
         try:
-            if job.input_path and job.input_path.exists():
-                job.input_path.unlink()
+            input_path = Path(job["input_path"]) if job.get("input_path") else None
+            if input_path and input_path.exists():
+                input_path.unlink()
 
-            if job.output_path and job.output_path.exists():
-                job.output_path.unlink()
+            output_path = Path(job["output_path"]) if job.get("output_path") else None
+            if output_path and output_path.exists():
+                output_path.unlink()
 
         except Exception as e:
             logger.warning(f"Failed to delete files for job {job_id}: {e}")
 
-        # Delete from repository
-        return self.repository.delete(job_id)
+        # Delete from storage
+        return self.storage.delete_job(job_id)
