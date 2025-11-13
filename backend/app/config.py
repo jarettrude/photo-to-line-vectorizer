@@ -62,6 +62,12 @@ class Settings(BaseSettings):
         Field(description="Path to Informative Drawings model"),
     ] = Path("../models/informative-drawings/checkpoints/netG_A_sketch.pth")
 
+    # Redis Configuration
+    redis_url: Annotated[
+        str | None,
+        Field(description="Redis URL for job storage (None for in-memory)"),
+    ] = None
+
     @field_validator("upload_dir", "results_dir")
     @classmethod
     def validate_directory_paths(cls, v: Path) -> Path:

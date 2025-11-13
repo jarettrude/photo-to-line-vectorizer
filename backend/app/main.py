@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from api.endpoints import router as api_router
 from config import settings
+from storage import init_job_storage
 
 logging.basicConfig(
     level=logging.INFO if settings.debug else logging.WARNING,
@@ -34,6 +35,12 @@ async def lifespan(app: FastAPI):
     logger.info(f"Results directory: {settings.results_dir}")
 
     settings.ensure_directories()
+
+    # Initialize job storage (Redis or in-memory)
+    job_storage = init_job_storage(redis_url=settings.redis_url)
+    logger.info(
+        f"Job storage initialized: {'Redis' if job_storage.use_redis else 'In-memory'}"
+    )
 
     yield
 
