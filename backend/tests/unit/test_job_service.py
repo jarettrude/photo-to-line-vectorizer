@@ -165,6 +165,7 @@ def test_get_result_path_success(job_service, mock_storage, tmp_path):
     mock_storage.get_job.return_value = {
         "job_id": job_id,
         "status": ProcessingStatus.COMPLETED.value,
+        "output_path": str(result_file),
     }
 
     path = job_service.get_result_path(job_id)
@@ -213,10 +214,14 @@ async def test_process_job_success(job_service, mock_storage, mock_processor, tm
         line_width_mm=0.3,
     )
 
-    # Mock successful processing
-    mock_doc = Mock()
-    mock_doc.bounds.return_value = (0, 0, 200, 150)
-    mock_processor.process_sync.return_value = (mock_doc, {"path_count": 10, "total_length_mm": 500.0})
+    # Mock successful processing - create ProcessingResult mock
+    from pipeline.processor import ProcessingResult
+
+    mock_result = Mock(spec=ProcessingResult)
+    mock_result.svg_content = "<svg></svg>"
+    mock_result.stats = {"path_count": 10, "total_length_mm": 500.0, "width_mm": 200.0, "height_mm": 150.0}
+    mock_result.device_used = "cpu"
+    mock_processor.process.return_value = mock_result
 
     await job_service.process_job(job_id, params)
 
@@ -262,7 +267,7 @@ async def test_process_job_handles_error(job_service, mock_storage, mock_process
     }
 
     # Mock processing failure
-    mock_processor.process_sync.side_effect = RuntimeError("Processing failed")
+    mock_processor.process.side_effect = RuntimeError("Processing failed")
 
     params = ProcessingParams(canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3)
 
