@@ -31,7 +31,7 @@ repos:
 
       - id: backend-pytest
         name: Backend - Pytest Suite
-        entry: bash -c 'cd backend && python -m pytest tests/ -v --tb=short -m "not requires_ml and not requires_potrace"'
+        entry: bash -c 'cd backend && python -m pytest tests/ -v --tb=short -m "not requires_ml and not requires_potrace and not requires_imagetracerjs and not integration"'
         language: system
         types: [python]
         pass_filenames: false

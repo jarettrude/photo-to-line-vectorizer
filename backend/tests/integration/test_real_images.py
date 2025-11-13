@@ -12,6 +12,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 
 def test_upload_real_jpeg_image(client, jpeg_image_path):
     """Test uploading real JPEG image."""
