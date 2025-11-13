@@ -83,3 +83,6 @@ models/**/pytorch/**
 backend/temp/
 backend/temp/uploads/
 backend/temp/results/
+
+# Test images
+test-images/
