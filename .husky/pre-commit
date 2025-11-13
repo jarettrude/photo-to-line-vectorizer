@@ -1,0 +1,43 @@
+#!/bin/bash
+# Pre-commit hook that runs all checks
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Backend checks
+echo ""
+echo "📦 Backend checks..."
+echo "→ Ruff linting..."
+cd backend && python -m ruff check app/ tests/ || { echo "❌ Ruff linting failed"; exit 1; }
+
+echo "→ Ruff formatting..."
+python -m ruff format app/ tests/ --check || { echo "❌ Ruff formatting failed"; exit 1; }
+
+echo "→ MyPy type checking..."
+python -m mypy app/ --strict --no-error-summary || { echo "❌ MyPy type checking failed"; exit 1; }
+
+echo "→ Running pytest..."
+python -m pytest tests/ -v --tb=short || { echo "❌ Pytest failed"; exit 1; }
+
+cd ..
+
+# Frontend checks
+echo ""
+echo "🎨 Frontend checks..."
+echo "→ ESLint..."
+cd frontend && npm run lint || { echo "❌ ESLint failed"; exit 1; }
+
+echo "→ Prettier..."
+npm run format:check || { echo "❌ Prettier check failed"; exit 1; }
+
+echo "→ TypeScript type checking..."
+npm run type-check || { echo "❌ TypeScript check failed"; exit 1; }
+
+echo "→ Building..."
+npm run build || { echo "❌ Build failed"; exit 1; }
+
+cd ..
+
+echo ""
+echo "✅ All checks passed! Ready to commit."
