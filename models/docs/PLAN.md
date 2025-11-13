@@ -17,6 +17,37 @@ User Upload → ML/CV Processing → Vectorization → Optimization → Interact
 
 ---
 
+### Architecture Details
+
+#### Components
+- **Frontend**
+  - Upload module (drag-drop, MIME validation)
+  - Controls panel (Auto/Advanced parameters)
+  - Preview canvas (interactive SVG, true-scale line width)
+  - Export panel (SVG/HPGL/G-code)
+- **Backend**
+  - Inference service (ML/CV line extraction)
+  - Vectorizer adapter (ImageTracerJS subprocess)
+  - Optimizer (vpype: linemerge, linesimplify, linesort, dedupe)
+  - Hatching/Color layer generator
+  - Exporter (SVG/HPGL/G-code)
+  - Job/Progress manager (REST + WebSocket)
+
+#### Data Flow
+Upload → (optional) Subject Isolation → Line Extraction (ML/CV) → Vectorize (ImageTracerJS) → Optimize (vpype) → Hatching/Color Layers → Scale to canvas → Export (SVG/HPGL/G-code) → Download
+
+#### Parameter Contract (required positional)
+- `canvas_width_mm`, `canvas_height_mm`, `line_width_mm` must be provided wherever sizing/preview occurs.
+- Determinism: identical input + parameters → identical output.
+
+#### Device Selection
+- Auto-detect device: CUDA → MPS (Apple Metal) → CPU. Return selected device in API response and logs. Graceful CPU fallback.
+
+#### Input Format Support
+- Accept and decode at minimum: JPEG, PNG, TIFF, WebP, HEIC/HEIF.
+- Local decoding only (Pillow + pillow-heif). Frontend must allow these MIME types and show clear errors when unsupported.
+
+
 ## Tech Stack
 
 ### Frontend
