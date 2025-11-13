@@ -39,9 +39,7 @@ class JobService:
         self.storage = storage
         self.processor = processor
 
-    async def create_job_from_upload(
-        self, file: UploadFile
-    ) -> tuple[str, str, Path]:
+    async def create_job_from_upload(self, file: UploadFile) -> tuple[str, str, Path]:
         """
         Create job from uploaded file with validation.
 
@@ -90,11 +88,15 @@ class JobService:
         job_id = str(uuid.uuid4())
         file_path = settings.upload_dir / f"{job_id}{suffix}"
 
+        # Save file
         try:
-            # Save file
             file_path.write_bytes(content)
+        except Exception as e:
+            logger.exception("Failed to write file")
+            raise HTTPException(status_code=500, detail="Upload failed") from e
 
-            # Create job in storage
+        # Create job in storage
+        try:
             self.storage.create_job(
                 job_id=job_id,
                 filename=file.filename,
@@ -105,15 +107,14 @@ class JobService:
             logger.info(
                 f"Created job {job_id} for file {file.filename} ({file_size_mb:.1f}MB)"
             )
-
-            return job_id, file.filename, file_path
-
         except Exception as e:
             # Clean up file on error
             if file_path.exists():
                 file_path.unlink()
             logger.exception("Job creation failed")
             raise HTTPException(status_code=500, detail="Upload failed") from e
+
+        return job_id, file.filename, file_path
 
     def get_job(self, job_id: str) -> dict:
         """

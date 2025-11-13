@@ -16,6 +16,9 @@ const meta = {
   argTypes: {
     onUploadComplete: { action: 'upload complete' },
   },
+  args: {
+    onUploadComplete: () => {},
+  },
 } satisfies Meta<typeof Upload>
 
 export default meta

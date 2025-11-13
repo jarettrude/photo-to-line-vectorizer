@@ -14,6 +14,9 @@ import {
   ErrorResponseSchema,
 } from './schemas'
 
+// Re-export types for external use
+export type { ProcessParams, UploadResponse, JobStatusResponse }
+
 const API_BASE = '/api'
 
 /**

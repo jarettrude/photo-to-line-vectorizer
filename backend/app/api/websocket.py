@@ -43,7 +43,9 @@ class ConnectionManager:
                 self.active_connections[job_id] = []
             self.active_connections[job_id].append(websocket)
 
-        logger.info(f"WebSocket connected for job {job_id}. Total: {len(self.active_connections[job_id])}")
+        logger.info(
+            f"WebSocket connected for job {job_id}. Total: {len(self.active_connections[job_id])}"
+        )
 
     async def disconnect(self, websocket: WebSocket, job_id: str) -> None:
         """

@@ -32,7 +32,9 @@ def mock_storage():
 def mock_processor():
     """Mock PhotoToLineProcessor."""
     processor = Mock(spec=PhotoToLineProcessor)
-    processor.process_sync = Mock(return_value=(Mock(), {"path_count": 42, "total_length_mm": 123.45}))
+    processor.process_sync = Mock(
+        return_value=(Mock(), {"path_count": 42, "total_length_mm": 123.45})
+    )
     return processor
 
 
@@ -220,7 +222,12 @@ async def test_process_job_success(job_service, mock_storage, mock_processor, tm
 
     mock_result = Mock(spec=ProcessingResult)
     mock_result.svg_content = "<svg></svg>"
-    mock_result.stats = {"path_count": 10, "total_length_mm": 500.0, "width_mm": 200.0, "height_mm": 150.0}
+    mock_result.stats = {
+        "path_count": 10,
+        "total_length_mm": 500.0,
+        "width_mm": 200.0,
+        "height_mm": 150.0,
+    }
     mock_result.device_used = "cpu"
     mock_processor.process.return_value = mock_result
 
@@ -232,7 +239,12 @@ async def test_process_job_success(job_service, mock_storage, mock_processor, tm
 
     # Verify set_result was called with correct parameters
     set_result_call = mock_storage.set_result.call_args
-    assert set_result_call.kwargs["stats"] == {"path_count": 10, "total_length_mm": 500.0, "width_mm": 200.0, "height_mm": 150.0}
+    assert set_result_call.kwargs["stats"] == {
+        "path_count": 10,
+        "total_length_mm": 500.0,
+        "width_mm": 200.0,
+        "height_mm": 150.0,
+    }
     assert set_result_call.kwargs["device_used"] == "cpu"
 
 
@@ -241,7 +253,9 @@ async def test_process_job_not_found(job_service, mock_storage):
     """Test processing non-existent job."""
     mock_storage.get_job.return_value = None
 
-    params = ProcessingParams(canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3)
+    params = ProcessingParams(
+        canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await job_service.process_job("nonexistent-id", params)
@@ -250,7 +264,9 @@ async def test_process_job_not_found(job_service, mock_storage):
 
 
 @pytest.mark.asyncio
-async def test_process_job_handles_error(job_service, mock_storage, mock_processor, tmp_path):
+async def test_process_job_handles_error(
+    job_service, mock_storage, mock_processor, tmp_path
+):
     """Test job processing error handling."""
     from config import settings
 
@@ -269,7 +285,9 @@ async def test_process_job_handles_error(job_service, mock_storage, mock_process
     # Mock processing failure
     mock_processor.process.side_effect = RuntimeError("Processing failed")
 
-    params = ProcessingParams(canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3)
+    params = ProcessingParams(
+        canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3
+    )
 
     # Service raises HTTPException after recording error
     with pytest.raises(HTTPException) as exc_info:

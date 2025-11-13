@@ -21,6 +21,7 @@ const meta = {
     },
   },
   args: {
+    onProcess: () => {},
     disabled: false,
   },
 } satisfies Meta<typeof Controls>
