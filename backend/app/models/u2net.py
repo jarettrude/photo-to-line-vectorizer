@@ -7,15 +7,12 @@ Uses pre-trained weights from the official repository.
 
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import cv2
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
-
+from torch import nn
 from utils.device import device_manager
 
 logger = logging.getLogger(__name__)
@@ -249,7 +246,8 @@ class U2NetPredictor:
     def _load_weights(self) -> None:
         """Load model weights from file with proper error handling."""
         if not self.model_path.exists():
-            raise FileNotFoundError(f"Model weights not found: {self.model_path}")
+            msg = f"Model weights not found: {self.model_path}"
+            raise FileNotFoundError(msg)
 
         state_dict = torch.load(self.model_path, map_location="cpu")
         self.model.load_state_dict(state_dict)
@@ -273,11 +271,9 @@ class U2NetPredictor:
 
         mask = d0[0, 0].cpu().numpy()
         mask = (mask * 255).astype(np.uint8)
-        mask = cv2.resize(
+        return cv2.resize(
             mask, (original_size[1], original_size[0]), interpolation=cv2.INTER_LINEAR
         )
-
-        return mask
 
     def _preprocess(self, image: np.ndarray) -> torch.Tensor:
         """

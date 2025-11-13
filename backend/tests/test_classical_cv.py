@@ -4,13 +4,12 @@ Tests for classical computer vision line extraction.
 Validates edge detection algorithms with real image processing.
 """
 
-import pytest
-import numpy as np
 import cv2
-
+import numpy as np
+import pytest
 from models.classical_cv import (
-    CannyEdgeDetector,
     BilateralCannyDetector,
+    CannyEdgeDetector,
     XDoGExtractor,
     auto_canny,
 )

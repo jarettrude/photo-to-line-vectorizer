@@ -62,6 +62,38 @@ class Settings(BaseSettings):
         Field(description="Path to Informative Drawings model"),
     ] = Path("../models/informative-drawings/checkpoints/netG_A_sketch.pth")
 
+    # Redis Configuration
+    redis_url: Annotated[
+        str | None,
+        Field(description="Redis URL for job storage (None for in-memory)"),
+    ] = None
+
+    # Rate Limiting
+    rate_limit_enabled: Annotated[bool, Field(description="Enable rate limiting")] = (
+        True
+    )
+    rate_limit_uploads: Annotated[
+        str, Field(description="Rate limit for upload endpoint")
+    ] = "10/minute"
+    rate_limit_processing: Annotated[
+        str, Field(description="Rate limit for processing endpoint")
+    ] = "5/minute"
+
+    # Authentication
+    secret_key: Annotated[str, Field(description="Secret key for JWT tokens")] = (
+        "changeme-secret-key-in-production-please"
+    )
+    resend_api_key: Annotated[
+        str | None, Field(description="Resend API key for email sending")
+    ] = None
+    resend_from_email: Annotated[
+        str, Field(description="From email address for Resend")
+    ] = "noreply@yourdomain.com"
+    frontend_url: Annotated[
+        str, Field(description="Frontend URL for magic link redirects")
+    ] = "http://localhost:5173"
+    auth_enabled: Annotated[bool, Field(description="Enable authentication")] = False
+
     @field_validator("upload_dir", "results_dir")
     @classmethod
     def validate_directory_paths(cls, v: Path) -> Path:

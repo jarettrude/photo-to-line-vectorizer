@@ -7,12 +7,16 @@ Entry point for the photo-to-line-vectorizer backend service.
 import logging
 from contextlib import asynccontextmanager
 
+from api.endpoints import router as api_router
+from auth import create_db_and_tables
+from auth.routes import router as auth_router
+from config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-
-from api.endpoints import router as api_router
-from config import settings
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from storage import init_job_storage
 
 logging.basicConfig(
     level=logging.INFO if settings.debug else logging.WARNING,
@@ -20,6 +24,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -35,6 +42,17 @@ async def lifespan(app: FastAPI):
 
     settings.ensure_directories()
 
+    # Initialize job storage (Redis or in-memory)
+    job_storage = init_job_storage(redis_url=settings.redis_url)
+    logger.info(
+        f"Job storage initialized: {'Redis' if job_storage.use_redis else 'In-memory'}"
+    )
+
+    # Initialize authentication database
+    if settings.auth_enabled:
+        await create_db_and_tables()
+        logger.info("Authentication database initialized")
+
     yield
 
     logger.info("Shutting down photo-to-line-vectorizer backend")
@@ -46,6 +64,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = [
     origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()
@@ -59,6 +81,10 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api", tags=["api"])
+
+# Include auth routes if authentication is enabled
+if settings.auth_enabled:
+    app.include_router(auth_router)
 
 
 @app.get("/")

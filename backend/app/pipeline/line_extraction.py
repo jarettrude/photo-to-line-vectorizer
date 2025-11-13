@@ -6,10 +6,8 @@ Coordinates classical CV and ML-based line extraction methods.
 
 import logging
 from enum import Enum
-from typing import Optional
 
 import numpy as np
-
 from models.classical_cv import (
     BilateralCannyDetector,
     CannyEdgeDetector,
@@ -47,8 +45,8 @@ class LineExtractor:
         self,
         image: np.ndarray,
         method: LineExtractionMethod = LineExtractionMethod.AUTO,
-        low_threshold: Optional[int] = None,
-        high_threshold: Optional[int] = None,
+        low_threshold: int | None = None,
+        high_threshold: int | None = None,
     ) -> np.ndarray:
         """
         Extract line art from image using specified method.
@@ -72,14 +70,14 @@ class LineExtractor:
                 detector = self.canny
             return detector.extract_lines(image)
 
-        elif method == LineExtractionMethod.BILATERAL_CANNY:
+        if method == LineExtractionMethod.BILATERAL_CANNY:
             if low_threshold and high_threshold:
                 detector = BilateralCannyDetector(low_threshold, high_threshold)
             else:
                 detector = self.bilateral_canny
             return detector.extract_lines(image)
 
-        elif method == LineExtractionMethod.AUTO_CANNY:
+        if method == LineExtractionMethod.AUTO_CANNY:
             import cv2
 
             if len(image.shape) == 3:
@@ -88,11 +86,11 @@ class LineExtractor:
                 gray = image
             return auto_canny(gray)
 
-        elif method == LineExtractionMethod.XDOG:
+        if method == LineExtractionMethod.XDOG:
             return self.xdog.extract_lines(image)
 
-        else:
-            raise ValueError(f"Unknown extraction method: {method}")
+        msg = f"Unknown extraction method: {method}"
+        raise ValueError(msg)
 
     def extract_with_params(
         self,

@@ -7,14 +7,12 @@ and preparation for line extraction.
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
 
 import cv2
 import numpy as np
-from PIL import Image
 import pillow_heif
-
 from models.u2net import U2NetPredictor
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +36,7 @@ class ImagePreprocessor:
         ".heif",
     }
 
-    def __init__(self, u2net_predictor: Optional[U2NetPredictor] = None):
+    def __init__(self, u2net_predictor: U2NetPredictor | None = None):
         """
         Initialize preprocessor.
 
@@ -64,11 +62,13 @@ class ImagePreprocessor:
             FileNotFoundError: If file doesn't exist
         """
         if not image_path.exists():
-            raise FileNotFoundError(f"Image not found: {image_path}")
+            msg = f"Image not found: {image_path}"
+            raise FileNotFoundError(msg)
 
         suffix = image_path.suffix.lower()
         if suffix not in self.SUPPORTED_FORMATS:
-            raise ValueError(f"Unsupported format: {suffix}")
+            msg = f"Unsupported format: {suffix}"
+            raise ValueError(msg)
 
         try:
             pil_image = Image.open(image_path)
@@ -82,7 +82,7 @@ class ImagePreprocessor:
             return image
 
         except Exception as e:
-            logger.error(f"Failed to load image {image_path}: {e}")
+            logger.exception(f"Failed to load image {image_path}: {e}")
             raise
 
     def resize_if_needed(
@@ -118,7 +118,7 @@ class ImagePreprocessor:
         self,
         image: np.ndarray,
         threshold: int = 128,
-        background_color: Tuple[int, int, int] = (255, 255, 255),
+        background_color: tuple[int, int, int] = (255, 255, 255),
     ) -> np.ndarray:
         """
         Isolate subject from background using U²-Net.
@@ -135,7 +135,8 @@ class ImagePreprocessor:
             RuntimeError: If U²-Net predictor not available
         """
         if self.u2net is None:
-            raise RuntimeError("U²-Net predictor not initialized")
+            msg = "U²-Net predictor not initialized"
+            raise RuntimeError(msg)
 
         rgba = self.u2net.isolate_subject(image, threshold)
 

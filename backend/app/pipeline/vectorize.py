@@ -7,10 +7,10 @@ running in a Node.js subprocess.
 
 import json
 import logging
+import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -35,6 +35,7 @@ class ImageTracerVectorizer:
         try:
             result = subprocess.run(
                 ["node", "--version"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -73,14 +74,13 @@ class ImageTracerVectorizer:
             cv2.imwrite(str(input_path), image)
 
         try:
-            svg_string = self._run_imagetracer(
+            return self._run_imagetracer(
                 input_path,
                 line_threshold,
                 qtres,
                 pathomit,
                 scale,
             )
-            return svg_string
         finally:
             input_path.unlink(missing_ok=True)
 
@@ -143,20 +143,28 @@ class ImageTracerVectorizer:
             tmp_script.write(tracer_script)
 
         try:
+            # Set NODE_PATH to include global modules
+            env = os.environ.copy()
+            env["NODE_PATH"] = "/opt/node22/lib/node_modules"
+
             result = subprocess.run(
                 ["node", str(script_path)],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=60,
+                env=env,
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"ImageTracerJS failed: {result.stderr}")
+                msg = f"ImageTracerJS failed: {result.stderr}"
+                raise RuntimeError(msg)
 
             return result.stdout
 
         except subprocess.TimeoutExpired:
-            raise RuntimeError("ImageTracerJS timeout")
+            msg = "ImageTracerJS timeout"
+            raise RuntimeError(msg)
         finally:
             script_path.unlink(missing_ok=True)
 
@@ -177,6 +185,7 @@ class PotraceVectorizer:
         try:
             result = subprocess.run(
                 ["potrace", "--version"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -230,13 +239,15 @@ class PotraceVectorizer:
                     "-o",
                     str(output_path),
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"Potrace failed: {result.stderr}")
+                msg = f"Potrace failed: {result.stderr}"
+                raise RuntimeError(msg)
 
             return output_path.read_text()
 

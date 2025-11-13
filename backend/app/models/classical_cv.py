@@ -6,7 +6,6 @@ as fast, deterministic alternatives to ML models.
 """
 
 import logging
-from typing import Tuple
 
 import cv2
 import numpy as np
@@ -45,7 +44,7 @@ class CannyEdgeDetector:
     def extract_lines(
         self,
         image: np.ndarray,
-        blur_kernel: Tuple[int, int] = (5, 5),
+        blur_kernel: tuple[int, int] = (5, 5),
         blur_sigma: float = 1.0,
     ) -> np.ndarray:
         """

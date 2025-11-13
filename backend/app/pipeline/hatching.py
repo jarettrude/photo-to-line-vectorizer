@@ -6,7 +6,6 @@ to line drawings.
 """
 
 import logging
-from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -83,9 +82,8 @@ class HatchGenerator:
             elif angle == 0:
                 if i < h:
                     cv2.line(hatch_mask, (0, i), (w, i), 255, 1)
-            elif angle == 90:
-                if i < w:
-                    cv2.line(hatch_mask, (i, 0), (i, h), 255, 1)
+            elif angle == 90 and i < w:
+                cv2.line(hatch_mask, (i, 0), (i, h), 255, 1)
 
         dark_regions = gray < self.darkness_threshold
         hatching = np.where(dark_regions, hatch_mask, 0).astype(np.uint8)
