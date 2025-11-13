@@ -4,12 +4,12 @@ Tests for image preprocessing pipeline.
 Validates image loading, format support, and preprocessing operations.
 """
 
-import pytest
-import numpy as np
 import tempfile
 from pathlib import Path
-from PIL import Image
 
+import numpy as np
+import pytest
+from PIL import Image
 from pipeline.preprocess import ImagePreprocessor
 
 

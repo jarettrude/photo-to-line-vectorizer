@@ -4,13 +4,12 @@ Database configuration for authentication.
 Uses SQLite with SQLAlchemy for user storage.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
+from config import settings
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
-from config import settings
 
 # Create async SQLite engine
 DATABASE_URL = f"sqlite+aiosqlite:///{settings.upload_dir.parent}/users.db"

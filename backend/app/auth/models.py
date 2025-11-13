@@ -5,14 +5,13 @@ Extends fastapi-users SQLAlchemyBaseUserTable.
 """
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 from sqlalchemy import String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     """Base class for SQLAlchemy models."""
 
-    pass
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):

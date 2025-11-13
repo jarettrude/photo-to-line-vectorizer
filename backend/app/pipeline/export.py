@@ -7,10 +7,8 @@ Supports SVG, HPGL, and G-code export using vpype.
 import logging
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import vpype as vp
-from vpype_cli import execute
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +52,8 @@ class PlotterExporter:
         svg_string: str,
         output_path: Path,
         device: str = "hp7475a",
-        velocity: Optional[int] = None,
-        force: Optional[int] = None,
+        velocity: int | None = None,
+        force: int | None = None,
     ) -> None:
         """
         Export to HPGL format for pen plotters.

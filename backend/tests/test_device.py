@@ -4,9 +4,7 @@ Tests for device detection and management.
 Validates hardware acceleration device selection logic.
 """
 
-import pytest
 import torch
-
 from utils.device import DeviceManager, DeviceType
 
 

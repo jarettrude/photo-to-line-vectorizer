@@ -5,6 +5,8 @@ Sets up authentication backends and strategies.
 """
 
 import uuid
+
+from config import settings
 from fastapi_users import FastAPIUsers
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -14,7 +16,6 @@ from fastapi_users.authentication import (
 
 from auth.manager import get_user_manager
 from auth.models import User
-from config import settings
 
 # Bearer token transport
 bearer_transport = BearerTransport(tokenUrl="auth/login")

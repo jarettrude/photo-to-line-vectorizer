@@ -11,7 +11,6 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -36,7 +35,7 @@ class ImageTracerVectorizer:
         try:
             result = subprocess.run(
                 ["node", "--version"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -150,7 +149,7 @@ class ImageTracerVectorizer:
 
             result = subprocess.run(
                 ["node", str(script_path)],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=60,
                 env=env,
@@ -183,7 +182,7 @@ class PotraceVectorizer:
         try:
             result = subprocess.run(
                 ["potrace", "--version"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -236,7 +235,7 @@ class PotraceVectorizer:
                     "-o",
                     str(output_path),
                 ],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=30,
             )

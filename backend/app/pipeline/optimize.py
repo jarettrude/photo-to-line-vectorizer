@@ -8,7 +8,6 @@ using the vpype library.
 import logging
 import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
 
 import vpype as vp
 

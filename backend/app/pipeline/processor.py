@@ -9,17 +9,15 @@ optimization, and export.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import cv2
-import numpy as np
-
 from models.u2net import U2NetPredictor
+
 from pipeline.hatching import HatchGenerator
-from pipeline.line_extraction import LineExtractor, LineExtractionMethod
+from pipeline.line_extraction import LineExtractor
 from pipeline.optimize import VpypeOptimizer
 from pipeline.preprocess import ImagePreprocessor
-from pipeline.vectorize import ImageTracerVectorizer, PotraceVectorizer
+from pipeline.vectorize import ImageTracerVectorizer
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +64,7 @@ class PhotoToLineProcessor:
 
     def __init__(
         self,
-        u2net_model_path: Optional[Path] = None,
+        u2net_model_path: Path | None = None,
     ):
         """
         Initialize processor with models and pipeline components.

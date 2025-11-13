@@ -4,14 +4,12 @@ Tests for FastAPI endpoints.
 Validates API functionality with real HTTP requests.
 """
 
-import pytest
-import tempfile
-from pathlib import Path
-from fastapi.testclient import TestClient
-from PIL import Image
 import io
 
+import pytest
+from fastapi.testclient import TestClient
 from main import app
+from PIL import Image
 from storage import init_job_storage
 
 

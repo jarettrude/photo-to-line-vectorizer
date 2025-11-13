@@ -7,14 +7,12 @@ and preparation for line extraction.
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
 
 import cv2
 import numpy as np
-from PIL import Image
 import pillow_heif
-
 from models.u2net import U2NetPredictor
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +36,7 @@ class ImagePreprocessor:
         ".heif",
     }
 
-    def __init__(self, u2net_predictor: Optional[U2NetPredictor] = None):
+    def __init__(self, u2net_predictor: U2NetPredictor | None = None):
         """
         Initialize preprocessor.
 
@@ -118,7 +116,7 @@ class ImagePreprocessor:
         self,
         image: np.ndarray,
         threshold: int = 128,
-        background_color: Tuple[int, int, int] = (255, 255, 255),
+        background_color: tuple[int, int, int] = (255, 255, 255),
     ) -> np.ndarray:
         """
         Isolate subject from background using U²-Net.

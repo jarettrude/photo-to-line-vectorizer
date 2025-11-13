@@ -7,15 +7,12 @@ Uses pre-trained weights from the official repository.
 
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import cv2
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
-
+from torch import nn
 from utils.device import device_manager
 
 logger = logging.getLogger(__name__)

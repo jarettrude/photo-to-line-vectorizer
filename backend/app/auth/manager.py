@@ -5,16 +5,15 @@ Handles user lifecycle events and email notifications.
 """
 
 import logging
-from typing import Optional
 import uuid
 
+import resend
+from config import settings
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin
-import resend
 
 from auth.database import get_user_db
 from auth.models import User
-from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +31,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
-    async def on_after_register(self, user: User, request: Optional[Request] = None):
+    async def on_after_register(self, user: User, request: Request | None = None):
         """Called after user registration."""
         logger.info(f"User {user.id} ({user.email}) registered")
 
     async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
+        self, user: User, token: str, request: Request | None = None
     ):
         """Send magic link email after forgot password request."""
         if not settings.resend_api_key:
@@ -82,7 +81,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             logger.error(f"Failed to send magic link to {user.email}: {e}")
 
     async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
+        self, user: User, token: str, request: Request | None = None
     ):
         """Send verification email with magic link."""
         await self.on_after_forgot_password(user, token, request)

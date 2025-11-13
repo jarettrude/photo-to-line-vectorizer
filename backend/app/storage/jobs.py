@@ -7,11 +7,9 @@ Replaces in-memory dict storage with Redis for production reliability.
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 
 import redis
-from redis.asyncio import Redis as AsyncRedis
-
 from api.models import ProcessingStatus
 
 logger = logging.getLogger(__name__)
@@ -25,7 +23,7 @@ class JobStorage:
     file paths, results, and metadata.
     """
 
-    def __init__(self, redis_url: Optional[str] = None, use_redis: bool = True):
+    def __init__(self, redis_url: str | None = None, use_redis: bool = True):
         """
         Initialize job storage.
 
@@ -50,10 +48,10 @@ class JobStorage:
                 logger.warning(f"Redis connection failed: {e}. Using in-memory storage.")
                 self.use_redis = False
                 self.redis_client = None
-                self._memory_storage: Dict[str, dict] = {}
+                self._memory_storage: dict[str, dict] = {}
         else:
             self.redis_client = None
-            self._memory_storage: Dict[str, dict] = {}
+            self._memory_storage: dict[str, dict] = {}
             logger.info("Using in-memory job storage")
 
     def _get_key(self, job_id: str) -> str:
@@ -99,7 +97,7 @@ class JobStorage:
 
         logger.debug(f"Created job {job_id}")
 
-    def get_job(self, job_id: str) -> Optional[dict]:
+    def get_job(self, job_id: str) -> dict | None:
         """
         Get job data.
 
@@ -115,10 +113,9 @@ class JobStorage:
             if data:
                 return json.loads(data)
             return None
-        else:
-            return self._memory_storage.get(job_id)
+        return self._memory_storage.get(job_id)
 
-    def update_job(self, job_id: str, updates: Dict[str, Any]) -> bool:
+    def update_job(self, job_id: str, updates: dict[str, Any]) -> bool:
         """
         Update job data.
 
@@ -148,7 +145,7 @@ class JobStorage:
         return True
 
     def set_status(
-        self, job_id: str, status: ProcessingStatus, error: Optional[str] = None
+        self, job_id: str, status: ProcessingStatus, error: str | None = None
     ) -> bool:
         """
         Update job status.
@@ -171,8 +168,8 @@ class JobStorage:
         self,
         job_id: str,
         output_path: Path,
-        stats: Optional[dict] = None,
-        device_used: Optional[str] = None,
+        stats: dict | None = None,
+        device_used: str | None = None,
     ) -> bool:
         """
         Set job result data.
@@ -210,11 +207,10 @@ class JobStorage:
         if self.use_redis:
             key = self._get_key(job_id)
             return bool(self.redis_client.delete(key))
-        else:
-            if job_id in self._memory_storage:
-                del self._memory_storage[job_id]
-                return True
-            return False
+        if job_id in self._memory_storage:
+            del self._memory_storage[job_id]
+            return True
+        return False
 
     def exists(self, job_id: str) -> bool:
         """
@@ -229,8 +225,7 @@ class JobStorage:
         if self.use_redis:
             key = self._get_key(job_id)
             return bool(self.redis_client.exists(key))
-        else:
-            return job_id in self._memory_storage
+        return job_id in self._memory_storage
 
     def cleanup_old_jobs(self, days: int = 7) -> int:
         """
@@ -248,13 +243,12 @@ class JobStorage:
         if self.use_redis:
             # Redis TTL handles this automatically
             return 0
-        else:
-            # In-memory storage doesn't track creation time
-            return 0
+        # In-memory storage doesn't track creation time
+        return 0
 
 
 # Global instance (initialized in main.py)
-job_storage: Optional[JobStorage] = None
+job_storage: JobStorage | None = None
 
 
 def get_job_storage() -> JobStorage:
@@ -265,7 +259,7 @@ def get_job_storage() -> JobStorage:
     return job_storage
 
 
-def init_job_storage(redis_url: Optional[str] = None) -> JobStorage:
+def init_job_storage(redis_url: str | None = None) -> JobStorage:
     """
     Initialize global job storage.
 

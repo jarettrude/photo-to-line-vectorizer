@@ -4,30 +4,27 @@ API endpoints for photo-to-line-vectorizer.
 Implements REST endpoints for upload, processing, status, and download.
 """
 
-import asyncio
 import logging
+import re
 import uuid
 from pathlib import Path
-from typing import Dict
-import re
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, BackgroundTasks, Request
+from config import settings
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
+from pipeline.processor import PhotoToLineProcessor, ProcessingParams
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from storage import get_job_storage
 
 from api.models import (
+    JobStats,
     JobStatusResponse,
     ProcessingStatus,
-    ProcessParams,
     ProcessRequest,
     ProcessResponse,
     UploadResponse,
-    JobStats,
 )
-from config import settings
-from pipeline.processor import PhotoToLineProcessor, ProcessingParams
-from storage import get_job_storage
 
 logger = logging.getLogger(__name__)
 

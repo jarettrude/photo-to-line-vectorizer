@@ -4,14 +4,13 @@ Authentication routes.
 Provides login, logout, register, and magic link endpoints.
 """
 
+from config import settings
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi_users import exceptions
-from fastapi_users.router import ErrorCode
 from pydantic import BaseModel, EmailStr
 
-from auth import fastapi_users, auth_backend, UserCreate, UserRead, UserUpdate
-from auth.manager import get_user_manager, UserManager
-from config import settings
+from auth import UserCreate, UserRead, UserUpdate, auth_backend, fastapi_users
+from auth.manager import UserManager, get_user_manager
 
 router = APIRouter()
 
@@ -81,5 +80,5 @@ async def request_magic_link(
         return {
             "message": "If an account exists with this email, you will receive a magic link."
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to send magic link")
