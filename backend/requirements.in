@@ -9,6 +9,7 @@ redis
 # Authentication
 fastapi-users[sqlalchemy]
 resend
+aiosqlite
 
 # Machine learning
 torch

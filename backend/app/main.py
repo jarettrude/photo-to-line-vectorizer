@@ -15,6 +15,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from api.endpoints import router as api_router
+from auth.routes import router as auth_router
+from auth import create_db_and_tables
 from config import settings
 from storage import init_job_storage
 
@@ -48,6 +50,11 @@ async def lifespan(app: FastAPI):
         f"Job storage initialized: {'Redis' if job_storage.use_redis else 'In-memory'}"
     )
 
+    # Initialize authentication database
+    if settings.auth_enabled:
+        await create_db_and_tables()
+        logger.info("Authentication database initialized")
+
     yield
 
     logger.info("Shutting down photo-to-line-vectorizer backend")
@@ -76,6 +83,10 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api", tags=["api"])
+
+# Include auth routes if authentication is enabled
+if settings.auth_enabled:
+    app.include_router(auth_router)
 
 
 @app.get("/")
