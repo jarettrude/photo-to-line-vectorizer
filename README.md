@@ -23,7 +23,7 @@ Professional web application for converting photographs to plotter-ready line ar
 - **Responsive**: Mobile-friendly, WCAG AA accessible
 
 ### Backend
-- **Framework**: FastAPI (Python 3.10+)
+- **Framework**: FastAPI (Python 3.13)
 - **ML/CV**: PyTorch 2.0+ (CUDA/MPS support), OpenCV
 - **Models**: U²-Net (Apache 2.0) for subject segmentation
 - **Vectorization**: ImageTracerJS (public domain), Potrace fallback
@@ -68,7 +68,7 @@ Canvas Scaling → SVG Export
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.13
 - Node.js 18+
 - (Optional) CUDA for NVIDIA GPUs
 - (Optional) Apple Silicon for MPS acceleration
@@ -95,12 +95,15 @@ docker-compose up -d
 ```bash
 cd backend
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install uv (once per machine)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create and activate virtual environment
+uv venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 
 # Install ImageTracerJS
 npm install -g imagetracerjs
@@ -324,7 +327,7 @@ npm install -g imagetracerjs
 python -c "import torch; print(torch.cuda.is_available())"
 
 # Install CUDA-enabled PyTorch
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ### MPS (Apple Silicon) Not Working
@@ -334,7 +337,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 python -c "import torch; print(torch.backends.mps.is_available())"
 
 # Ensure PyTorch 2.0+
-pip install --upgrade torch torchvision
+uv pip install --upgrade torch torchvision
 ```
 
 ### Vectorization Fails

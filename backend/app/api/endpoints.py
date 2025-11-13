@@ -3,6 +3,7 @@ API endpoints for photo-to-line-vectorizer.
 
 Implements REST endpoints for upload, processing, status, and download.
 """
+
 import asyncio
 import logging
 import uuid
@@ -66,7 +67,16 @@ async def upload_image(
         raise HTTPException(status_code=400, detail="No filename provided")
 
     suffix = Path(file.filename).suffix.lower()
-    if suffix not in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp", ".heic", ".heif"}:
+    if suffix not in {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tiff",
+        ".tif",
+        ".webp",
+        ".heic",
+        ".heif",
+    }:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file format: {suffix}",

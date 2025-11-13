@@ -4,6 +4,7 @@ SVG path optimization using vpype.
 Implements path optimization, merging, simplification, and canvas scaling
 using the vpype library.
 """
+
 import logging
 import tempfile
 from pathlib import Path

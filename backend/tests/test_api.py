@@ -3,6 +3,7 @@ Tests for FastAPI endpoints.
 
 Validates API functionality with real HTTP requests.
 """
+
 import pytest
 import tempfile
 from pathlib import Path

@@ -88,7 +88,9 @@ class DeviceManager:
             case _:
                 return "CPU"
 
-    def to_device(self, tensor_or_model: torch.Tensor | nn.Module) -> torch.Tensor | nn.Module:
+    def to_device(
+        self, tensor_or_model: torch.Tensor | nn.Module
+    ) -> torch.Tensor | nn.Module:
         """
         Move tensor or model to the selected device.
 

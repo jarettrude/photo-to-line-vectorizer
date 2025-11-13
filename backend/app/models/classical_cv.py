@@ -4,6 +4,7 @@ Classical computer vision line extraction methods.
 Implements traditional edge detection algorithms (Canny, XDoG)
 as fast, deterministic alternatives to ML models.
 """
+
 import logging
 from typing import Tuple
 

@@ -37,9 +37,15 @@ class Settings(BaseSettings):
     debug: Annotated[bool, Field(description="Debug mode flag")] = True
 
     # File Storage
-    upload_dir: Annotated[Path, Field(description="Upload directory path")] = Path("./temp/uploads")
-    results_dir: Annotated[Path, Field(description="Results directory path")] = Path("./temp/results")
-    max_upload_size_mb: Annotated[int, Field(ge=1, le=500, description="Max upload size in MB")] = 50
+    upload_dir: Annotated[Path, Field(description="Upload directory path")] = Path(
+        "./temp/uploads"
+    )
+    results_dir: Annotated[Path, Field(description="Results directory path")] = Path(
+        "./temp/results"
+    )
+    max_upload_size_mb: Annotated[
+        int, Field(ge=1, le=500, description="Max upload size in MB")
+    ] = 50
 
     # Model Paths
     u2net_model_path: Annotated[

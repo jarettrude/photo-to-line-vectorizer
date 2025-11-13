@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -12,8 +12,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g imagetracerjs
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+ENV PATH="/root/.local/bin:${PATH}"
+RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Python dependencies using uv (uses compiled lock/txt for reproducibility)
+COPY requirements.txt ./
+RUN uv pip install --system --no-cache -r requirements.txt
 
 COPY app/ ./app/
 

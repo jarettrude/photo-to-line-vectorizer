@@ -1,0 +1,15 @@
+-r requirements.in
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+
+# Type checking
+mypy
+types-aiofiles
+
+# Linting/Formatting
+ruff
+pre-commit

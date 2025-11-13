@@ -4,6 +4,7 @@ Raster to vector conversion using ImageTracerJS.
 Converts bitmap line art to SVG paths using ImageTracerJS
 running in a Node.js subprocess.
 """
+
 import json
 import logging
 import subprocess
@@ -132,7 +133,9 @@ class ImageTracerVectorizer:
         tracer_script = tracer_script.replace("PATHOMIT", str(pathomit))
         tracer_script = tracer_script.replace("SCALE", str(scale))
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as tmp_script:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False
+        ) as tmp_script:
             script_path = Path(tmp_script.name)
             tmp_script.write(tracer_script)
 
@@ -216,10 +219,13 @@ class PotraceVectorizer:
                 [
                     "potrace",
                     "-s",
-                    "-t", str(turdsize),
-                    "-k", turnpolicy,
+                    "-t",
+                    str(turdsize),
+                    "-k",
+                    turnpolicy,
                     str(input_path),
-                    "-o", str(output_path),
+                    "-o",
+                    str(output_path),
                 ],
                 capture_output=True,
                 text=True,

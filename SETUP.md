@@ -1,38 +1,12 @@
 # Installation and Setup Guide
 
-## Python 3.14 Features Used
+## Python 3.13 Notes
 
-This project leverages cutting-edge Python 3.14 features:
-
-### 1. **Free-Threaded Python (PEP 779)**
-- True parallel execution without GIL limitations
-- Improved performance for concurrent image processing
-- Better utilization of multi-core systems
-
-### 2. **Deferred Evaluation of Annotations (PEP 649)**
-- Annotations stored in special-purpose functions
-- Evaluated only when necessary
-- Improved startup performance and memory usage
-- Enhanced type checking with forward references
-
-### 3. **Template Strings (t-strings) (PEP 750)**
-- Safer string interpolation for logging and error messages
-- Custom string template processing
-- Used in error reporting and user feedback
-
-### 4. **Enhanced Interactive Shell**
-- Live syntax highlighting during development
-- Smarter autocompletion
-- Better debugging experience
-
-### 5. **Improved Type System**
-- Better support for `StrEnum` and modern type hints
-- Enhanced pattern matching with structural pattern matching
-- Stricter type checking with Pydantic v2
+This project targets Python 3.13. Tooling emphasizes strict typing (MyPy), Ruff, and Pydantic v2.
 
 ## Prerequisites
 
-- **Python 3.14+** (required)
+- **Python 3.13** (required)
 - **Node.js 20+** (required)
 - **npm 10+** (required)
 - Git 2.40+
@@ -51,8 +25,11 @@ cd photo-to-line-vectorizer
 ### 2. Install Pre-commit Hooks
 
 ```bash
+# Install uv (once per machine)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Install pre-commit package (if not already installed)
-pip install pre-commit
+uv pip install pre-commit
 
 # Install the git hooks
 pre-commit install
@@ -66,12 +43,15 @@ pre-commit run --all-files
 ```bash
 cd backend
 
-# Create virtual environment with Python 3.14
-python3.14 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Ensure uv is installed
+command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment with Python 3.13
+uv venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 
 # Install ImageTracerJS globally
 npm install -g imagetracerjs
@@ -137,7 +117,7 @@ Every commit automatically runs:
 **Backend:**
 ```bash
 cd backend
-source venv/bin/activate
+source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -202,7 +182,7 @@ TypeScript configuration:
 
 ## Code Quality Standards
 
-### Backend (Python 3.14)
+### Backend (Python 3.13)
 
 **Required:**
 - Type hints with `from __future__ import annotations`
@@ -278,12 +258,12 @@ pre-commit uninstall
 pre-commit install
 ```
 
-### Python 3.14 Not Found
+### Python 3.13 Not Found
 
 ```bash
-# Install Python 3.14 using pyenv
-pyenv install 3.14.0
-pyenv local 3.14.0
+# Install Python 3.13 using pyenv
+pyenv install 3.13.0
+pyenv local 3.13.0
 
 # Or download from python.org
 # https://www.python.org/downloads/
@@ -293,7 +273,7 @@ pyenv local 3.14.0
 
 ```bash
 # Update type stubs
-pip install --upgrade types-aiofiles types-pillow
+uv pip install --upgrade types-aiofiles types-pillow
 
 # Check specific module
 mypy app/models/u2net.py --strict
@@ -313,7 +293,7 @@ rm -rf node_modules/.vite
 ## Docker Development
 
 ```bash
-# Build with Python 3.14
+# Build with Python 3.13
 docker-compose build
 
 # Start services
@@ -343,13 +323,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: '3.13'
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
+      - name: Install uv and dependencies
         run: |
-          pip install pre-commit
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv pip install pre-commit
           pre-commit install
       - name: Run pre-commit
         run: pre-commit run --all-files
@@ -357,9 +338,9 @@ jobs:
 
 ## Performance Tips
 
-### Python 3.14 Free-Threading
+### Free-Threading (experimental)
 
-Enable free-threaded mode:
+Enable free-threaded mode if your interpreter supports it:
 ```bash
 export PYTHON_GIL=0
 python app/main.py

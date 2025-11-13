@@ -3,6 +3,7 @@ Line art extraction pipeline.
 
 Coordinates classical CV and ML-based line extraction methods.
 """
+
 import logging
 from enum import Enum
 from typing import Optional
@@ -80,6 +81,7 @@ class LineExtractor:
 
         elif method == LineExtractionMethod.AUTO_CANNY:
             import cv2
+
             if len(image.shape) == 3:
                 gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             else:

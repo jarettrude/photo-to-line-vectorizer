@@ -1,0 +1,22 @@
+# Core framework
+fastapi[standard]
+uvicorn[standard]
+python-multipart
+websockets
+
+# Machine learning
+torch
+torchvision
+
+# Image processing
+opencv-python
+Pillow
+pillow-heif
+numpy
+
+# Vectorization
+vpype
+vpype-gcode
+
+# Configuration
+pydantic-settings

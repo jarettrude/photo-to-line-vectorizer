@@ -5,6 +5,7 @@ Orchestrates the complete photo-to-line-vectorizer pipeline from
 image upload through preprocessing, line extraction, vectorization,
 optimization, and export.
 """
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path

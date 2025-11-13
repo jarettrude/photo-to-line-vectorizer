@@ -4,6 +4,7 @@ Hatching and shading generation for line art.
 Implements scanline hatching for dark regions to add shading
 to line drawings.
 """
+
 import logging
 from typing import List, Tuple
 
@@ -98,7 +99,9 @@ class HatchGenerator:
                 elif angle == -45:
                     cv2.line(crosshatch_mask, (-w, i), (i, -h), 255, 1)
 
-            crosshatching = np.where(very_dark_regions, crosshatch_mask, 0).astype(np.uint8)
+            crosshatching = np.where(very_dark_regions, crosshatch_mask, 0).astype(
+                np.uint8
+            )
             hatching = cv2.bitwise_or(hatching, crosshatching)
 
         logger.debug(f"Generated hatching with {np.sum(hatching > 0)} pixels")

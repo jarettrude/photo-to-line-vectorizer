@@ -3,6 +3,7 @@ Tests for classical computer vision line extraction.
 
 Validates edge detection algorithms with real image processing.
 """
+
 import pytest
 import numpy as np
 import cv2

@@ -3,6 +3,7 @@ FastAPI main application.
 
 Entry point for the photo-to-line-vectorizer backend service.
 """
+
 import logging
 from contextlib import asynccontextmanager
 

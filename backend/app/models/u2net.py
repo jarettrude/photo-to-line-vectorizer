@@ -4,6 +4,7 @@ U²-Net portrait segmentation model.
 Implements U²-Net for subject isolation and background removal.
 Uses pre-trained weights from the official repository.
 """
+
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -25,7 +26,9 @@ class REBNCONV(nn.Module):
 
     def __init__(self, in_ch: int, out_ch: int, dirate: int = 1):
         super().__init__()
-        self.conv_s1 = nn.Conv2d(in_ch, out_ch, 3, padding=1 * dirate, dilation=1 * dirate)
+        self.conv_s1 = nn.Conv2d(
+            in_ch, out_ch, 3, padding=1 * dirate, dilation=1 * dirate
+        )
         self.bn_s1 = nn.BatchNorm2d(out_ch)
         self.relu_s1 = nn.ReLU(inplace=True)
 
@@ -74,15 +77,25 @@ class RSU7(nn.Module):
         hx6 = self.rebnconv6(hx)
         hx7 = self.rebnconv7(hx6)
         hx6d = self.rebnconv6d(torch.cat((hx7, hx6), 1))
-        hx6dup = F.interpolate(hx6d, size=hx5.shape[2:], mode='bilinear', align_corners=False)
+        hx6dup = F.interpolate(
+            hx6d, size=hx5.shape[2:], mode="bilinear", align_corners=False
+        )
         hx5d = self.rebnconv5d(torch.cat((hx6dup, hx5), 1))
-        hx5dup = F.interpolate(hx5d, size=hx4.shape[2:], mode='bilinear', align_corners=False)
+        hx5dup = F.interpolate(
+            hx5d, size=hx4.shape[2:], mode="bilinear", align_corners=False
+        )
         hx4d = self.rebnconv4d(torch.cat((hx5dup, hx4), 1))
-        hx4dup = F.interpolate(hx4d, size=hx3.shape[2:], mode='bilinear', align_corners=False)
+        hx4dup = F.interpolate(
+            hx4d, size=hx3.shape[2:], mode="bilinear", align_corners=False
+        )
         hx3d = self.rebnconv3d(torch.cat((hx4dup, hx3), 1))
-        hx3dup = F.interpolate(hx3d, size=hx2.shape[2:], mode='bilinear', align_corners=False)
+        hx3dup = F.interpolate(
+            hx3d, size=hx2.shape[2:], mode="bilinear", align_corners=False
+        )
         hx2d = self.rebnconv2d(torch.cat((hx3dup, hx2), 1))
-        hx2dup = F.interpolate(hx2d, size=hx1.shape[2:], mode='bilinear', align_corners=False)
+        hx2dup = F.interpolate(
+            hx2d, size=hx1.shape[2:], mode="bilinear", align_corners=False
+        )
         hx1d = self.rebnconv1d(torch.cat((hx2dup, hx1), 1))
         return hx1d + hxin
 
@@ -115,9 +128,13 @@ class RSU4(nn.Module):
         hx = self.pool3(hx3)
         hx4 = self.rebnconv4(hx)
         hx3d = self.rebnconv3d(torch.cat((hx4, hx3), 1))
-        hx3dup = F.interpolate(hx3d, size=hx2.shape[2:], mode='bilinear', align_corners=False)
+        hx3dup = F.interpolate(
+            hx3d, size=hx2.shape[2:], mode="bilinear", align_corners=False
+        )
         hx2d = self.rebnconv2d(torch.cat((hx3dup, hx2), 1))
-        hx2dup = F.interpolate(hx2d, size=hx1.shape[2:], mode='bilinear', align_corners=False)
+        hx2dup = F.interpolate(
+            hx2d, size=hx1.shape[2:], mode="bilinear", align_corners=False
+        )
         hx1d = self.rebnconv1d(torch.cat((hx2dup, hx1), 1))
         return hx1d + hxin
 
@@ -164,29 +181,47 @@ class U2NETP(nn.Module):
         hx5 = self.stage5(hx)
         hx = self.pool56(hx5)
         hx6 = self.stage6(hx)
-        hx6up = F.interpolate(hx6, size=hx5.shape[2:], mode='bilinear', align_corners=False)
+        hx6up = F.interpolate(
+            hx6, size=hx5.shape[2:], mode="bilinear", align_corners=False
+        )
         hx5d = self.stage5d(torch.cat((hx6up, hx5), 1))
-        hx5dup = F.interpolate(hx5d, size=hx4.shape[2:], mode='bilinear', align_corners=False)
+        hx5dup = F.interpolate(
+            hx5d, size=hx4.shape[2:], mode="bilinear", align_corners=False
+        )
         hx4d = self.stage4d(torch.cat((hx5dup, hx4), 1))
-        hx4dup = F.interpolate(hx4d, size=hx3.shape[2:], mode='bilinear', align_corners=False)
+        hx4dup = F.interpolate(
+            hx4d, size=hx3.shape[2:], mode="bilinear", align_corners=False
+        )
         hx3d = self.stage3d(torch.cat((hx4dup, hx3), 1))
-        hx3dup = F.interpolate(hx3d, size=hx2.shape[2:], mode='bilinear', align_corners=False)
+        hx3dup = F.interpolate(
+            hx3d, size=hx2.shape[2:], mode="bilinear", align_corners=False
+        )
         hx2d = self.stage2d(torch.cat((hx3dup, hx2), 1))
-        hx2dup = F.interpolate(hx2d, size=hx1.shape[2:], mode='bilinear', align_corners=False)
+        hx2dup = F.interpolate(
+            hx2d, size=hx1.shape[2:], mode="bilinear", align_corners=False
+        )
         hx1d = self.stage1d(torch.cat((hx2dup, hx1), 1))
         d1 = self.side1(hx1d)
         d2 = self.side2(hx2d)
-        d2 = F.interpolate(d2, size=d1.shape[2:], mode='bilinear', align_corners=False)
+        d2 = F.interpolate(d2, size=d1.shape[2:], mode="bilinear", align_corners=False)
         d3 = self.side3(hx3d)
-        d3 = F.interpolate(d3, size=d1.shape[2:], mode='bilinear', align_corners=False)
+        d3 = F.interpolate(d3, size=d1.shape[2:], mode="bilinear", align_corners=False)
         d4 = self.side4(hx4d)
-        d4 = F.interpolate(d4, size=d1.shape[2:], mode='bilinear', align_corners=False)
+        d4 = F.interpolate(d4, size=d1.shape[2:], mode="bilinear", align_corners=False)
         d5 = self.side5(hx5d)
-        d5 = F.interpolate(d5, size=d1.shape[2:], mode='bilinear', align_corners=False)
+        d5 = F.interpolate(d5, size=d1.shape[2:], mode="bilinear", align_corners=False)
         d6 = self.side6(hx6)
-        d6 = F.interpolate(d6, size=d1.shape[2:], mode='bilinear', align_corners=False)
+        d6 = F.interpolate(d6, size=d1.shape[2:], mode="bilinear", align_corners=False)
         d0 = self.outconv(torch.cat((d1, d2, d3, d4, d5, d6), 1))
-        return torch.sigmoid(d0), torch.sigmoid(d1), torch.sigmoid(d2), torch.sigmoid(d3), torch.sigmoid(d4), torch.sigmoid(d5), torch.sigmoid(d6)
+        return (
+            torch.sigmoid(d0),
+            torch.sigmoid(d1),
+            torch.sigmoid(d2),
+            torch.sigmoid(d3),
+            torch.sigmoid(d4),
+            torch.sigmoid(d5),
+            torch.sigmoid(d6),
+        )
 
 
 class U2NetPredictor:
@@ -238,7 +273,9 @@ class U2NetPredictor:
 
         mask = d0[0, 0].cpu().numpy()
         mask = (mask * 255).astype(np.uint8)
-        mask = cv2.resize(mask, (original_size[1], original_size[0]), interpolation=cv2.INTER_LINEAR)
+        mask = cv2.resize(
+            mask, (original_size[1], original_size[0]), interpolation=cv2.INTER_LINEAR
+        )
 
         return mask
 
@@ -254,7 +291,9 @@ class U2NetPredictor:
         """
         image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_LINEAR)
         image = image.astype(np.float32) / 255.0
-        image = (image - np.array([0.485, 0.456, 0.406])) / np.array([0.229, 0.224, 0.225])
+        image = (image - np.array([0.485, 0.456, 0.406])) / np.array(
+            [0.229, 0.224, 0.225]
+        )
         image = image.transpose(2, 0, 1)
         return torch.from_numpy(image).unsqueeze(0).float()
 

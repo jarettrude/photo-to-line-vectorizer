@@ -4,6 +4,7 @@ Image preprocessing pipeline.
 Handles image loading, format conversion, subject isolation,
 and preparation for line extraction.
 """
+
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
@@ -26,7 +27,16 @@ class ImagePreprocessor:
     and optional subject isolation.
     """
 
-    SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp", ".heic", ".heif"}
+    SUPPORTED_FORMATS = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tiff",
+        ".tif",
+        ".webp",
+        ".heic",
+        ".heif",
+    }
 
     def __init__(self, u2net_predictor: Optional[U2NetPredictor] = None):
         """
@@ -66,7 +76,9 @@ class ImagePreprocessor:
                 pil_image = pil_image.convert("RGB")
 
             image = np.array(pil_image)
-            logger.info(f"Loaded image: {image_path} ({image.shape[1]}x{image.shape[0]})")
+            logger.info(
+                f"Loaded image: {image_path} ({image.shape[1]}x{image.shape[0]})"
+            )
             return image
 
         except Exception as e:
@@ -129,12 +141,16 @@ class ImagePreprocessor:
 
         rgb_with_bg = np.full_like(image, background_color, dtype=np.uint8)
         alpha = rgba[:, :, 3:4] / 255.0
-        rgb_with_bg = (rgba[:, :, :3] * alpha + rgb_with_bg * (1 - alpha)).astype(np.uint8)
+        rgb_with_bg = (rgba[:, :, :3] * alpha + rgb_with_bg * (1 - alpha)).astype(
+            np.uint8
+        )
 
         logger.info("Subject isolation complete")
         return rgb_with_bg
 
-    def normalize_contrast(self, image: np.ndarray, clip_limit: float = 2.0) -> np.ndarray:
+    def normalize_contrast(
+        self, image: np.ndarray, clip_limit: float = 2.0
+    ) -> np.ndarray:
         """
         Enhance image contrast using CLAHE.
 
