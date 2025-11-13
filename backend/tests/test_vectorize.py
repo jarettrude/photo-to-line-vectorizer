@@ -11,6 +11,7 @@ import pytest
 from app.pipeline.vectorize import ImageTracerVectorizer, PotraceVectorizer
 
 
+@pytest.mark.requires_imagetracerjs
 class TestImageTracerVectorizer:
     """Tests for ImageTracerJS vectorizer."""
 
@@ -96,6 +97,7 @@ class TestImageTracerVectorizer:
         assert "<svg" in svg.lower()
 
 
+@pytest.mark.requires_potrace
 class TestPotraceVectorizer:
     """Tests for Potrace vectorizer."""
 

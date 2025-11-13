@@ -2,18 +2,62 @@
  * SVG preview component.
  *
  * Displays the processed SVG result with statistics and download option.
+ * Uses WebSocket for real-time progress updates during processing.
  */
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Download, Loader2 } from 'lucide-react'
 import type { JobStatusResponse } from '@/lib/api'
 import { getDownloadUrl } from '@/lib/api'
+import { useWebSocket } from '@/hooks/useWebSocket'
 
 interface PreviewProps {
   jobStatus: JobStatusResponse | null
 }
 
 export function Preview({ jobStatus }: PreviewProps) {
+  const [realtimeProgress, setRealtimeProgress] = useState<number | null>(null)
+  const [realtimeStage, setRealtimeStage] = useState<string | null>(null)
+  const [realtimeMessage, setRealtimeMessage] = useState<string | null>(null)
+
+  // Connect to WebSocket for real-time updates when processing
+  const { isConnected } = useWebSocket(
+    jobStatus?.status === 'processing' ? jobStatus.job_id : null,
+    {
+      onMessage: (message) => {
+        if (message.type === 'progress') {
+          setRealtimeProgress(message.progress)
+          setRealtimeStage(message.stage || null)
+          setRealtimeMessage(message.message || null)
+        } else if (message.type === 'complete') {
+          // Update will come from polling, just clear real-time state
+          setRealtimeProgress(100)
+          setRealtimeStage(null)
+          setRealtimeMessage('Complete!')
+        } else if (message.type === 'error') {
+          setRealtimeStage(null)
+          setRealtimeMessage(`Error: ${message.error}`)
+        }
+      },
+      enabled: jobStatus?.status === 'processing',
+    }
+  )
+
+  // Reset real-time state when job changes or completes
+  useEffect(() => {
+    if (jobStatus?.status !== 'processing') {
+      setRealtimeProgress(null)
+      setRealtimeStage(null)
+      setRealtimeMessage(null)
+    }
+  }, [jobStatus?.status])
+
+  // Use real-time progress if available, otherwise fall back to jobStatus
+  const displayProgress = realtimeProgress ?? jobStatus?.progress ?? 0
+  const displayStage = realtimeStage
+  const displayMessage = realtimeMessage
+
   if (!jobStatus) {
     return (
       <Card className="h-full">
@@ -38,10 +82,19 @@ export function Preview({ jobStatus }: PreviewProps) {
         {jobStatus.status === 'processing' && (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">Processing... {jobStatus.progress}%</p>
-            {jobStatus.device_used && (
-              <p className="text-sm text-muted-foreground">Using: {jobStatus.device_used}</p>
-            )}
+            <div className="text-center space-y-2">
+              <p className="text-muted-foreground">Processing... {displayProgress}%</p>
+              {displayStage && (
+                <p className="text-sm text-muted-foreground capitalize">
+                  Stage: {displayStage.replace(/_/g, ' ')}
+                </p>
+              )}
+              {displayMessage && <p className="text-sm text-muted-foreground">{displayMessage}</p>}
+              {isConnected && <p className="text-xs text-green-600">● Live updates</p>}
+              {jobStatus.device_used && (
+                <p className="text-sm text-muted-foreground">Using: {jobStatus.device_used}</p>
+              )}
+            </div>
           </div>
         )}
 

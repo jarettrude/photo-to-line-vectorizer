@@ -12,6 +12,8 @@ from main import app
 from PIL import Image
 from storage import init_job_storage
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_job_storage():

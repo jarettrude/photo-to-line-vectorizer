@@ -1,50 +1,59 @@
 /**
  * API client for photo-to-line-vectorizer backend.
  *
- * Provides typed interfaces for all API endpoints.
+ * Provides typed interfaces with runtime validation using Zod.
+ * All API responses are validated to ensure type safety.
  */
 
-export interface ProcessParams {
-  canvas_width_mm: number
-  canvas_height_mm: number
-  line_width_mm: number
-  isolate_subject?: boolean
-  use_ml?: boolean
-  edge_threshold?: [number, number]
-  line_threshold?: number
-  merge_tolerance?: number
-  simplify_tolerance?: number
-  hatching_enabled?: boolean
-  hatch_density?: number
-  hatch_angle?: number
-  darkness_threshold?: number
-}
+import {
+  ProcessParams,
+  UploadResponse,
+  UploadResponseSchema,
+  JobStatusResponse,
+  JobStatusResponseSchema,
+  ErrorResponseSchema,
+} from './schemas'
 
-export interface UploadResponse {
-  job_id: string
-  filename: string
-  image_url: string
-}
-
-export interface JobStats {
-  path_count: number
-  total_length_mm: number
-  width_mm?: number
-  height_mm?: number
-}
-
-export interface JobStatusResponse {
-  job_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  progress: number
-  result_url?: string
-  stats?: JobStats
-  error?: string
-  device_used?: string
-}
+// Re-export types for external use
+export type { ProcessParams, UploadResponse, JobStatusResponse }
 
 const API_BASE = '/api'
 
+/**
+ * Custom error class for API errors.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public detail?: string
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/**
+ * Parse error response from API.
+ */
+async function parseError(response: Response): Promise<never> {
+  try {
+    const error = await response.json()
+    const validated = ErrorResponseSchema.parse(error)
+    throw new ApiError(validated.detail || 'Request failed', response.status, validated.detail)
+  } catch (e) {
+    if (e instanceof ApiError) throw e
+    throw new ApiError(`Request failed with status ${response.status}`, response.status)
+  }
+}
+
+/**
+ * Upload image file for processing.
+ *
+ * @param file - Image file (JPEG, PNG, TIFF, WebP, HEIC/HEIF)
+ * @returns Upload response with job_id
+ * @throws ApiError if upload fails or file invalid
+ */
 export async function uploadImage(file: File): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('file', file)
@@ -55,13 +64,28 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Upload failed')
+    await parseError(response)
   }
 
-  return response.json()
+  const data = await response.json()
+
+  // Runtime validation with Zod
+  try {
+    return UploadResponseSchema.parse(data)
+  } catch (e) {
+    console.error('Invalid upload response:', e)
+    throw new ApiError('Invalid response from server', 500)
+  }
 }
 
+/**
+ * Start processing an uploaded image.
+ *
+ * @param jobId - Job identifier from upload
+ * @param mode - Processing mode (usually 'auto')
+ * @param params - Optional processing parameters
+ * @throws ApiError if processing fails to start
+ */
 export async function processImage(
   jobId: string,
   mode: string = 'auto',
@@ -80,22 +104,59 @@ export async function processImage(
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Processing failed')
+    await parseError(response)
   }
 }
 
+/**
+ * Get job status with progress and results.
+ *
+ * @param jobId - Job identifier
+ * @returns Job status with progress, results, and stats
+ * @throws ApiError if job not found
+ */
 export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`${API_BASE}/status/${jobId}`)
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Failed to get status')
+    await parseError(response)
   }
 
-  return response.json()
+  const data = await response.json()
+
+  // Runtime validation with Zod
+  try {
+    return JobStatusResponseSchema.parse(data)
+  } catch (e) {
+    console.error('Invalid status response:', e)
+    throw new ApiError('Invalid response from server', 500)
+  }
 }
 
-export function getDownloadUrl(jobId: string): string {
-  return `${API_BASE}/download/${jobId}`
+/**
+ * Get download URL for result file.
+ *
+ * @param jobId - Job identifier
+ * @param format - Export format (svg, hpgl, gcode)
+ * @returns Download URL
+ */
+export function getDownloadUrl(jobId: string, format: string = 'svg'): string {
+  return `${API_BASE}/download/${jobId}?format=${format}`
+}
+
+/**
+ * Download result file.
+ *
+ * @param jobId - Job identifier
+ * @param format - Export format (svg, hpgl, gcode)
+ * @throws ApiError if download fails
+ */
+export async function downloadResult(jobId: string, format: string = 'svg'): Promise<Blob> {
+  const response = await fetch(getDownloadUrl(jobId, format))
+
+  if (!response.ok) {
+    await parseError(response)
+  }
+
+  return response.blob()
 }

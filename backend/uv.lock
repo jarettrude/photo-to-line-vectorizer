@@ -1,3 +1,8 @@
 version = 1
 revision = 3
-requires-python = ">=3.13"
+requires-python = ">=3.11"
+
+[[package]]
+name = "photo-to-line-vectorizer"
+version = "1.0.0"
+source = { virtual = "." }
