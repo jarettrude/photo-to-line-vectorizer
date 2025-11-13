@@ -3,6 +3,13 @@ fastapi[standard]
 uvicorn[standard]
 python-multipart
 websockets
+slowapi
+redis
+
+# Authentication
+fastapi-users[sqlalchemy]
+resend
+aiosqlite
 
 # Machine learning
 torch

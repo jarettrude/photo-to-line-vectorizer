@@ -11,7 +11,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F  # noqa: N812
+import torch.nn.functional as F
 from numpy.typing import NDArray
 from torch import nn
 from utils.device import device_manager
@@ -330,6 +330,7 @@ class U2NetPredictor:
     def _load_weights(self) -> None:
         """
         Load model weights from file with proper error handling.
+
 
         Raises:
             FileNotFoundError: If model weights file doesn't exist

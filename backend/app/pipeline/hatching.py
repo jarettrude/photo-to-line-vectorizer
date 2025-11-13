@@ -53,7 +53,7 @@ class HatchGenerator:
         self,
         image: NDArray[np.uint8],
         canvas_width_mm: float,
-        canvas_height_mm: float,  # noqa: ARG002
+        canvas_height_mm: float,
         angle: int = 45,
     ) -> NDArray[np.uint8]:
         """

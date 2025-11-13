@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,7 +86,7 @@ class PhotoToLineProcessor:
         Args:
             u2net_model_path: Optional path to U²-Net weights
         """
-        from utils.device import device_manager  # noqa: PLC0415
+        from utils.device import device_manager
 
         self.device_manager = device_manager
 

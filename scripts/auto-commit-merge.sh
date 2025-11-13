@@ -46,7 +46,7 @@ merge_upstream() {
   git fetch origin >>"$LOGFILE" 2>&1 || { log "Fetch failed"; return 1; }
 
   # Fast-forward or merge with no edit; stop on conflicts
-  if git merge --no-ff --no-edit "$UPSTREAM" >>"$LOGFILE" 2>&1; then
+  if git merge --no-edit "$UPSTREAM" >>"$LOGFILE" 2>&1; then
     log "Merged $UPSTREAM successfully"
     return 0
   else

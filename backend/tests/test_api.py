@@ -10,6 +10,13 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 from PIL import Image
+from storage import init_job_storage
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_job_storage():
+    """Initialize job storage for tests (in-memory mode)."""
+    init_job_storage(redis_url=None)
 
 
 @pytest.fixture
@@ -75,7 +82,8 @@ def test_upload_invalid_format(client):
 
 def test_status_endpoint_not_found(client):
     """Test status endpoint with non-existent job."""
-    response = client.get("/api/status/nonexistent-job-id")
+    # Use valid UUID format but non-existent job
+    response = client.get("/api/status/00000000-0000-0000-0000-000000000000")
 
     assert response.status_code == 404
 
@@ -100,10 +108,11 @@ def test_upload_and_status(client, test_image_bytes):
 
 def test_process_endpoint_not_found(client):
     """Test process endpoint with non-existent job."""
+    # Use valid UUID format but non-existent job
     response = client.post(
         "/api/process",
         json={
-            "job_id": "nonexistent-job-id",
+            "job_id": "00000000-0000-0000-0000-000000000000",
             "mode": "auto",
         },
     )
@@ -113,6 +122,7 @@ def test_process_endpoint_not_found(client):
 
 def test_download_endpoint_not_found(client):
     """Test download endpoint with non-existent job."""
-    response = client.get("/api/download/nonexistent-job-id")
+    # Use valid UUID format but non-existent job
+    response = client.get("/api/download/00000000-0000-0000-0000-000000000000")
 
     assert response.status_code == 404

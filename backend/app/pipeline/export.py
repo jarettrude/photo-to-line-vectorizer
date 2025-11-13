@@ -60,7 +60,7 @@ class PlotterExporter:
         self,
         svg_string: str,
         output_path: Path,
-        device: str = "hp7475a",  # noqa: ARG002
+        device: str = "",
         velocity: int | None = None,
         force: int | None = None,
     ) -> None:
@@ -128,11 +128,11 @@ class PlotterExporter:
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    def export_gcode(  # noqa: PLR0913
+    def export_gcode(
         self,
         svg_string: str,
         output_path: Path,
-        profile: str = "gcode",  # noqa: ARG002
+        profile: str = "gcode",
         feed_rate: int = 1000,
         z_up: float = 5.0,
         z_down: float = 0.0,
@@ -158,7 +158,7 @@ class PlotterExporter:
         try:
             # Use vpype-gcode plugin
             from vpype_gcode import (
-                gwrite,  # type: ignore[import-untyped]  # noqa: F401
+                gwrite,  # type: ignore[import-untyped]
             )
 
             result = vp.read_svg(str(tmp_path), quantization=0.1)

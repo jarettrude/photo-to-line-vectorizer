@@ -22,13 +22,13 @@ class VpypeOptimizer:
     and canvas sizing operations.
     """
 
-    def optimize(  # noqa: PLR0913
+    def optimize(
         self,
         svg_string: str,
         canvas_width_mm: float,
         canvas_height_mm: float,
         merge_tolerance: float = 0.5,
-        simplify_tolerance: float = 0.2,  # noqa: ARG002
+        simplify_tolerance: float = 0.2,
         dedupe_tolerance: float = 0.1,
     ) -> str:
         """
@@ -57,50 +57,31 @@ class VpypeOptimizer:
 
             logger.debug(f"Initial path count: {len(lc)}")
 
-            # LineCollection methods modify in-place and return self
+            # Optimize
             lc.merge(tolerance=merge_tolerance)
             logger.debug(f"After merge: {len(lc)}")
-
-            # Note: linesimplify is not a method on LineCollection in new API
-            # Simplification happens during read_svg with quantization parameter
-            logger.debug(f"After simplify: {len(lc)}")
-
-            # Note: linesort is not a method on LineCollection
-            # Sorting needs to be done differently
-            logger.debug("Sort complete")
-
             lc.reloop(tolerance=dedupe_tolerance)
             logger.debug("Reloop complete")
-
-            # Note: dedupe is not a method on LineCollection
-            logger.debug(f"After dedupe: {len(lc)}")
-
-            bounds = lc.bounds()
-            if bounds:
-                current_width = bounds[2] - bounds[0]
-                current_height = bounds[3] - bounds[1]
-                logger.debug(f"Current bounds: {current_width}x{current_height}")
 
             # Scale to fit target dimensions
             bounds = lc.bounds()
             if bounds:
                 current_width = bounds[2] - bounds[0]
                 current_height = bounds[3] - bounds[1]
+                logger.debug(f"Current bounds: {current_width}x{current_height}")
 
-                # Calculate scale factors to fit within canvas
                 scale_x = canvas_width_mm / current_width if current_width > 0 else 1.0
                 scale_y = (
                     canvas_height_mm / current_height if current_height > 0 else 1.0
                 )
                 scale_factor = min(scale_x, scale_y)
-
                 lc.scale(scale_factor, scale_factor)
 
             logger.info(f"Final path count: {len(lc)}")
 
             # Create Document for writing
             doc = vp.Document()
-            doc.add(lc, 1)  # Add to layer 1
+            doc.add(lc, 1)
             doc.page_size = (canvas_width_mm, canvas_height_mm)
 
             output_path = tmp_path.with_suffix(".optimized.svg")
@@ -162,7 +143,7 @@ class VpypeOptimizer:
         svg_string: str,
         canvas_width_mm: float,
         canvas_height_mm: float,
-        maintain_aspect: bool = True,  # noqa: ARG002
+        maintain_aspect: bool = True,
     ) -> str:
         """
         Scale SVG to fit canvas dimensions.
@@ -192,18 +173,16 @@ class VpypeOptimizer:
                 current_width = bounds[2] - bounds[0]
                 current_height = bounds[3] - bounds[1]
 
-                # Calculate scale factors to fit within canvas
                 scale_x = canvas_width_mm / current_width if current_width > 0 else 1.0
                 scale_y = (
                     canvas_height_mm / current_height if current_height > 0 else 1.0
                 )
                 scale_factor = min(scale_x, scale_y)
-
                 lc.scale(scale_factor, scale_factor)
 
             # Create Document for writing
             doc = vp.Document()
-            doc.add(lc, 1)  # Add to layer 1
+            doc.add(lc, 1)
             doc.page_size = (canvas_width_mm, canvas_height_mm)
 
             output_path = tmp_path.with_suffix(".scaled.svg")

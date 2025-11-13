@@ -11,10 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from config import settings
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from pipeline.export import PlotterExporter
 from pipeline.processor import PhotoToLineProcessor, ProcessingParams
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from storage import get_job_storage
 
 from api.models import (
     JobStats,
@@ -33,6 +36,9 @@ jobs: dict[str, dict[str, Any]] = {}
 
 # Module-level singleton to avoid global statement
 _processor: PhotoToLineProcessor | None = None
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # UUID validation pattern
 UUID_PATTERN = re.compile(
@@ -56,7 +62,7 @@ def validate_job_id(job_id: str) -> None:
 
 def get_processor() -> PhotoToLineProcessor:
     """Get or create the global processor instance."""
-    global _processor  # noqa: PLW0603
+    global _processor
     if _processor is None:
         _processor = PhotoToLineProcessor(
             u2net_model_path=settings.u2net_model_path,
@@ -65,8 +71,10 @@ def get_processor() -> PhotoToLineProcessor:
 
 
 @router.post("/upload", response_model=UploadResponse)
+@limiter.limit(settings.rate_limit_uploads)
 async def upload_image(
-    file: UploadFile = File(...),  # noqa: B008
+    request: Request,
+    file: UploadFile = File(...),
 ) -> UploadResponse:
     """
     Upload an image file for processing.
@@ -111,22 +119,21 @@ async def upload_image(
         # Check file size
         file_size_mb = len(content) / (1024 * 1024)
         if file_size_mb > settings.max_upload_size_mb:
-            raise HTTPException(  # noqa: TRY301
+            raise HTTPException(
                 status_code=413,
                 detail=f"File too large: {file_size_mb:.1f}MB (max: {settings.max_upload_size_mb}MB)",
             )
 
         file_path.write_bytes(content)
 
-        jobs[job_id] = {
-            "status": ProcessingStatus.PENDING,
-            "filename": file.filename,
-            "input_path": file_path,
-            "output_path": None,
-            "error": None,
-            "stats": None,
-            "device_used": None,
-        }
+        # Store job in Redis/in-memory storage
+        job_storage = get_job_storage()
+        job_storage.create_job(
+            job_id=job_id,
+            filename=file.filename,
+            input_path=file_path,
+            status=ProcessingStatus.PENDING,
+        )
 
         logger.info(f"Uploaded {file.filename} as job {job_id}")
 
@@ -149,40 +156,46 @@ async def process_job(job_id: str, params: ProcessingParams) -> None:
         job_id: Job identifier
         params: Processing parameters
     """
-    if job_id not in jobs:
+    job_storage = get_job_storage()
+    job = job_storage.get_job(job_id)
+
+    if not job:
         logger.error(f"Job {job_id} not found")
         return
 
-    job = jobs[job_id]
-    job["status"] = ProcessingStatus.PROCESSING
+    job_storage.set_status(job_id, ProcessingStatus.PROCESSING)
 
     try:
         proc = get_processor()
 
         result = proc.process(
-            image_path=job["input_path"],
+            image_path=Path(job["input_path"]),
             params=params,
         )
 
         output_path = settings.results_dir / f"{job_id}.svg"
         output_path.write_text(result.svg_content)
 
-        job["output_path"] = output_path
-        job["status"] = ProcessingStatus.COMPLETED
-        job["stats"] = result.stats
-        job["device_used"] = result.device_used
+        # set_result() automatically sets status to COMPLETED
+        job_storage.set_result(
+            job_id=job_id,
+            output_path=output_path,
+            stats=result.stats,
+            device_used=result.device_used,
+        )
 
         logger.info(f"Job {job_id} completed successfully")
 
     except Exception as e:
         logger.exception("Job %s failed", job_id)
-        job["status"] = ProcessingStatus.FAILED
-        job["error"] = str(e)
+        job_storage.set_status(job_id, ProcessingStatus.FAILED, error=str(e))
 
 
 @router.post("/process", response_model=ProcessResponse)
+@limiter.limit(settings.rate_limit_processing)
 async def process_image(
-    request: ProcessRequest,
+    request: Request,
+    body: ProcessRequest,
     background_tasks: BackgroundTasks,
 ) -> ProcessResponse:
     """
@@ -201,12 +214,13 @@ async def process_image(
     Raises:
         HTTPException: If job not found or parameters invalid
     """
-    validate_job_id(request.job_id)
+    validate_job_id(body.job_id)
 
-    if request.job_id not in jobs:
+    job_storage = get_job_storage()
+    job = job_storage.get_job(body.job_id)
+
+    if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-
-    job = jobs[request.job_id]
 
     if job["status"] != ProcessingStatus.PENDING:
         raise HTTPException(
@@ -214,21 +228,21 @@ async def process_image(
             detail=f"Job already {job['status'].value}",
         )
 
-    if request.params:
+    if body.params:
         params = ProcessingParams(
-            canvas_width_mm=request.params.canvas_width_mm,
-            canvas_height_mm=request.params.canvas_height_mm,
-            line_width_mm=request.params.line_width_mm,
-            isolate_subject=request.params.isolate_subject,
-            use_ml=request.params.use_ml,
-            edge_threshold=request.params.edge_threshold,
-            line_threshold=request.params.line_threshold,
-            merge_tolerance=request.params.merge_tolerance,
-            simplify_tolerance=request.params.simplify_tolerance,
-            hatching_enabled=request.params.hatching_enabled,
-            hatch_density=request.params.hatch_density,
-            hatch_angle=request.params.hatch_angle,
-            darkness_threshold=request.params.darkness_threshold,
+            canvas_width_mm=body.params.canvas_width_mm,
+            canvas_height_mm=body.params.canvas_height_mm,
+            line_width_mm=body.params.line_width_mm,
+            isolate_subject=body.params.isolate_subject,
+            use_ml=body.params.use_ml,
+            edge_threshold=body.params.edge_threshold,
+            line_threshold=body.params.line_threshold,
+            merge_tolerance=body.params.merge_tolerance,
+            simplify_tolerance=body.params.simplify_tolerance,
+            hatching_enabled=body.params.hatching_enabled,
+            hatch_density=body.params.hatch_density,
+            hatch_angle=body.params.hatch_angle,
+            darkness_threshold=body.params.darkness_threshold,
         )
     else:
         params = ProcessingParams(
@@ -237,10 +251,10 @@ async def process_image(
             line_width_mm=0.3,
         )
 
-    background_tasks.add_task(process_job, request.job_id, params)
+    background_tasks.add_task(process_job, body.job_id, params)
 
     return ProcessResponse(
-        job_id=request.job_id,
+        job_id=body.job_id,
         status=ProcessingStatus.PROCESSING,
         message="Processing started",
     )
@@ -262,10 +276,11 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
     """
     validate_job_id(job_id)
 
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
+    job_storage = get_job_storage()
+    job = job_storage.get_job(job_id)
 
-    job = jobs[job_id]
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
     progress = 0
     if job["status"] == ProcessingStatus.PROCESSING:
@@ -314,10 +329,11 @@ async def download_result(job_id: str, export_format: str = "svg") -> FileRespon
     """
     validate_job_id(job_id)
 
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
+    job_storage = get_job_storage()
+    job = job_storage.get_job(job_id)
 
-    job = jobs[job_id]
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
     if job["status"] != ProcessingStatus.COMPLETED:
         raise HTTPException(
@@ -325,7 +341,9 @@ async def download_result(job_id: str, export_format: str = "svg") -> FileRespon
             detail="Job not completed",
         )
 
-    if not job["output_path"] or not job["output_path"].exists():
+    output_path = Path(job["output_path"]) if job["output_path"] else None
+
+    if not output_path or not output_path.exists():
         raise HTTPException(status_code=404, detail="Result file not found")
 
     format_lower = export_format.lower()
@@ -333,14 +351,14 @@ async def download_result(job_id: str, export_format: str = "svg") -> FileRespon
     # For SVG, return the stored file directly
     if format_lower == "svg":
         return FileResponse(
-            job["output_path"],
+            output_path,
             media_type="image/svg+xml",
             filename=f"{job['filename']}.svg",
         )
 
     # For other formats, convert on-the-fly
     exporter = PlotterExporter()
-    svg_content = job["output_path"].read_text()
+    svg_content = output_path.read_text()
 
     # Create export file path
     export_ext = {
