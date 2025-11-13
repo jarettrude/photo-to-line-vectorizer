@@ -22,7 +22,8 @@ def mock_storage():
     storage.create_job = Mock()
     storage.get_job = Mock()
     storage.update_job = Mock()
-    storage.set_job_error = Mock()
+    storage.set_status = Mock(return_value=True)
+    storage.set_result = Mock(return_value=True)
     storage.job_exists = Mock(return_value=False)
     return storage
 
@@ -225,15 +226,14 @@ async def test_process_job_success(job_service, mock_storage, mock_processor, tm
 
     await job_service.process_job(job_id, params)
 
-    # Verify status updates
-    assert mock_storage.update_job.call_count >= 2  # At least start and complete
-    # Verify final status is COMPLETED
-    final_call = [
-        call for call in mock_storage.update_job.call_args_list if "status" in call.kwargs
-    ]
-    assert any(
-        call.kwargs.get("status") == ProcessingStatus.COMPLETED for call in final_call
-    )
+    # Verify status was set to PROCESSING then result was set
+    assert mock_storage.set_status.called
+    assert mock_storage.set_result.called
+
+    # Verify set_result was called with correct parameters
+    set_result_call = mock_storage.set_result.call_args
+    assert set_result_call.kwargs["stats"] == {"path_count": 10, "total_length_mm": 500.0, "width_mm": 200.0, "height_mm": 150.0}
+    assert set_result_call.kwargs["device_used"] == "cpu"
 
 
 @pytest.mark.asyncio
@@ -271,9 +271,17 @@ async def test_process_job_handles_error(job_service, mock_storage, mock_process
 
     params = ProcessingParams(canvas_width_mm=200.0, canvas_height_mm=150.0, line_width_mm=0.3)
 
-    await job_service.process_job(job_id, params)
+    # Service raises HTTPException after recording error
+    with pytest.raises(HTTPException) as exc_info:
+        await job_service.process_job(job_id, params)
 
-    # Verify error was recorded
-    mock_storage.set_job_error.assert_called_once()
-    error_message = mock_storage.set_job_error.call_args.args[1]
-    assert "Processing failed" in error_message
+    # Verify error response
+    assert exc_info.value.status_code == 500
+    assert "Processing failed" in exc_info.value.detail
+
+    # Verify error was recorded via set_status
+    mock_storage.set_status.assert_called()
+    # Check that FAILED status was set with error message
+    status_call = mock_storage.set_status.call_args
+    assert status_call.args[1] == ProcessingStatus.FAILED
+    assert "Processing failed" in status_call.kwargs.get("error", "")
