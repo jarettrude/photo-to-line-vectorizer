@@ -157,7 +157,9 @@ class PlotterExporter:
 
         try:
             # Use vpype-gcode plugin
-            from vpype_gcode import gwrite  # type: ignore[import-untyped]  # noqa: PLC0415, F401
+            from vpype_gcode import (
+                gwrite,  # type: ignore[import-untyped]  # noqa: F401
+            )
 
             result = vp.read_svg(str(tmp_path), quantization=0.1)
             # read_svg returns (LineCollection, width, height)
