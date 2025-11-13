@@ -4,7 +4,7 @@
  * Handles file selection, validation, and upload to backend.
  * Supports JPEG, PNG, TIFF, WebP, HEIC/HEIF formats.
  */
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type DragEvent, type ChangeEvent } from 'react'
 import { Upload as UploadIcon, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
@@ -65,7 +65,7 @@ export function Upload({ onUploadComplete }: UploadProps) {
   )
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       setIsDragging(false)
 
@@ -77,7 +77,7 @@ export function Upload({ onUploadComplete }: UploadProps) {
     [handleFile]
   )
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setIsDragging(true)
   }, [])
@@ -87,7 +87,7 @@ export function Upload({ onUploadComplete }: UploadProps) {
   }, [])
 
   const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (file) {
         handleFile(file)

@@ -38,13 +38,9 @@ export function Preview({ jobStatus }: PreviewProps) {
         {jobStatus.status === 'processing' && (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">
-              Processing... {jobStatus.progress}%
-            </p>
+            <p className="text-muted-foreground">Processing... {jobStatus.progress}%</p>
             {jobStatus.device_used && (
-              <p className="text-sm text-muted-foreground">
-                Using: {jobStatus.device_used}
-              </p>
+              <p className="text-sm text-muted-foreground">Using: {jobStatus.device_used}</p>
             )}
           </div>
         )}
@@ -59,11 +55,7 @@ export function Preview({ jobStatus }: PreviewProps) {
         {jobStatus.status === 'completed' && jobStatus.result_url && (
           <div className="space-y-4">
             <div className="border rounded-lg overflow-hidden bg-white">
-              <iframe
-                src={jobStatus.result_url}
-                className="w-full h-96"
-                title="SVG Preview"
-              />
+              <iframe src={jobStatus.result_url} className="w-full h-96" title="SVG Preview" />
             </div>
 
             {jobStatus.stats && (
@@ -74,9 +66,7 @@ export function Preview({ jobStatus }: PreviewProps) {
                 </div>
                 <div className="p-3 bg-muted rounded-md">
                   <p className="text-muted-foreground">Total Length</p>
-                  <p className="font-medium">
-                    {jobStatus.stats.total_length_mm.toFixed(2)} mm
-                  </p>
+                  <p className="font-medium">{jobStatus.stats.total_length_mm.toFixed(2)} mm</p>
                 </div>
                 {jobStatus.stats.width_mm && (
                   <div className="p-3 bg-muted rounded-md">

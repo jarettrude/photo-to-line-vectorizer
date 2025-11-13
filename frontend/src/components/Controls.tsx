@@ -14,7 +14,7 @@ import { Settings, Play } from 'lucide-react'
 import type { ProcessParams } from '@/lib/api'
 
 interface ControlsProps {
-  onProcess: (params: ProcessParams) => void
+  onProcess: (_: ProcessParams) => void
   disabled: boolean
 }
 
@@ -108,6 +108,11 @@ export function Controls({ onProcess, disabled }: ControlsProps) {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Switch id="use-ml" checked={useMl} onCheckedChange={setUseMl} />
+          <Label htmlFor="use-ml">Use ML-assisted Vectorization</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
           <Switch id="hatching" checked={hatchingEnabled} onCheckedChange={setHatchingEnabled} />
           <Label htmlFor="hatching">Enable Hatching</Label>
         </div>
@@ -160,6 +165,18 @@ export function Controls({ onProcess, disabled }: ControlsProps) {
                 min={0}
                 max={5}
                 step={0.1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="line-threshold">Line Threshold</Label>
+              <Input
+                id="line-threshold"
+                type="number"
+                value={lineThreshold}
+                onChange={(e) => setLineThreshold(Number(e.target.value))}
+                min={0}
+                max={255}
               />
             </div>
 
