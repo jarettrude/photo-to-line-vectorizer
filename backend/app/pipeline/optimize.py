@@ -50,48 +50,31 @@ class VpypeOptimizer:
             tmp_path = Path(tmp.name)
             tmp.write(svg_string)
 
+        output_path = None
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            # read_svg returns (LineCollection, width, height)
+            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
+            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
 
-            logger.debug(f"Initial path count: {doc.count()}")
+            logger.debug(f"Initial layer count: {doc.count()}")
 
+            # Apply vpype commands
             doc = vp.linemerge(doc, tolerance=merge_tolerance)
-            logger.debug(f"After linemerge: {doc.count()}")
-
             doc = vp.linesimplify(doc, tolerance=simplify_tolerance)
-            logger.debug(f"After linesimplify: {doc.count()}")
-
-            doc = vp.linesort(doc, no_flip=False)
-            logger.debug("Linesort complete")
-
+            doc = vp.linesort(doc)
             doc = vp.reloop(doc, tolerance=dedupe_tolerance)
-            logger.debug("Reloop complete")
-
             doc = vp.dedupe(doc, tolerance=dedupe_tolerance)
-            logger.debug(f"After dedupe: {doc.count()}")
 
-            bounds = doc.bounds()
-            if bounds is not None:
-                current_width = bounds[2] - bounds[0]
-                current_height = bounds[3] - bounds[1]
-                logger.debug(f"Current bounds: {current_width}x{current_height}")
+            logger.debug(f"Optimized layer count: {doc.count()}")
 
-            target_width = vp.convert_length(f"{canvas_width_mm}mm")
-            target_height = vp.convert_length(f"{canvas_height_mm}mm")
+            # Scale to canvas dimensions
+            target_width_px = vp.convert(f"{canvas_width_mm}mm")
+            target_height_px = vp.convert(f"{canvas_height_mm}mm")
 
-            doc = vp.scaleto(
-                doc,
-                target_width,
-                target_height,
-            )
+            doc = vp.scaleto(doc, target_width_px, target_height_px)
+            doc.page_size = (target_width_px, target_height_px)
 
-            doc = vp.pagesize(
-                doc,
-                f"{canvas_width_mm}mm",
-                f"{canvas_height_mm}mm",
-            )
-
-            logger.info(f"Final path count: {doc.count()}")
+            logger.info(f"Final layer count: {doc.count()}")
 
             output_path = tmp_path.with_suffix(".optimized.svg")
             vp.write_svg(str(output_path), doc, color_mode="layer")
@@ -100,7 +83,8 @@ class VpypeOptimizer:
 
         finally:
             tmp_path.unlink(missing_ok=True)
-            output_path.unlink(missing_ok=True)
+            if output_path:
+                output_path.unlink(missing_ok=True)
 
     def get_stats(self, svg_string: str) -> dict:
         """
@@ -117,9 +101,11 @@ class VpypeOptimizer:
             tmp.write(svg_string)
 
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
+            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
 
-            path_count = doc.count()
+            # Count total paths across all layers
+            path_count = sum(len(layer) for layer in doc.layers.values())
             total_length = doc.length()
             bounds = doc.bounds()
 
@@ -161,19 +147,16 @@ class VpypeOptimizer:
             tmp_path = Path(tmp.name)
             tmp.write(svg_string)
 
+        output_path = None
         try:
-            doc = vp.read_svg(str(tmp_path), quantization=0.1)
+            line_collection, width, height = vp.read_svg(str(tmp_path), quantization=0.1)
+            doc = vp.Document(line_collection=line_collection, page_size=(width, height))
 
-            target_width = vp.convert_length(f"{canvas_width_mm}mm")
-            target_height = vp.convert_length(f"{canvas_height_mm}mm")
+            target_width_px = vp.convert(f"{canvas_width_mm}mm")
+            target_height_px = vp.convert(f"{canvas_height_mm}mm")
 
-            doc = vp.scaleto(doc, target_width, target_height)
-
-            doc = vp.pagesize(
-                doc,
-                f"{canvas_width_mm}mm",
-                f"{canvas_height_mm}mm",
-            )
+            doc = vp.scaleto(doc, target_width_px, target_height_px)
+            doc.page_size = (target_width_px, target_height_px)
 
             output_path = tmp_path.with_suffix(".scaled.svg")
             vp.write_svg(str(output_path), doc, color_mode="layer")
@@ -182,5 +165,5 @@ class VpypeOptimizer:
 
         finally:
             tmp_path.unlink(missing_ok=True)
-            if output_path.exists():
+            if output_path and output_path.exists():
                 output_path.unlink()

@@ -7,6 +7,7 @@ running in a Node.js subprocess.
 
 import json
 import logging
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -143,11 +144,16 @@ class ImageTracerVectorizer:
             tmp_script.write(tracer_script)
 
         try:
+            # Set NODE_PATH to include global modules
+            env = os.environ.copy()
+            env["NODE_PATH"] = "/opt/node22/lib/node_modules"
+
             result = subprocess.run(
                 ["node", str(script_path)],
                 capture_output=True,
                 text=True,
                 timeout=60,
+                env=env,
             )
 
             if result.returncode != 0:
