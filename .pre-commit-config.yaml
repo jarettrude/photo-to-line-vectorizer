@@ -1,0 +1,86 @@
+# Pre-commit hooks configuration
+# Ensures code quality and successful builds before commits
+
+repos:
+  # Backend hooks
+  - repo: local
+    hooks:
+      - id: backend-ruff-check
+        name: Backend - Ruff Linting
+        entry: bash -c 'cd backend && python -m ruff check app/ tests/'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+      - id: backend-ruff-format
+        name: Backend - Ruff Formatting
+        entry: bash -c 'cd backend && python -m ruff format app/ tests/ --check'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+      - id: backend-mypy
+        name: Backend - MyPy Type Checking
+        entry: bash -c 'cd backend && python -m mypy app/ --strict --no-error-summary'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+      - id: backend-pytest
+        name: Backend - Pytest Suite
+        entry: bash -c 'cd backend && python -m pytest tests/ -v --tb=short'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+  # Frontend hooks
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend - ESLint
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        types: [ts, tsx]
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-format-check
+        name: Frontend - Prettier Check
+        entry: bash -c 'cd frontend && npm run format:check'
+        language: system
+        types: [ts, tsx, json, css]
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-type-check
+        name: Frontend - TypeScript Check
+        entry: bash -c 'cd frontend && npm run type-check'
+        language: system
+        types: [ts, tsx]
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-build
+        name: Frontend - Build Check
+        entry: bash -c 'cd frontend && npm run build'
+        language: system
+        types: [ts, tsx]
+        pass_filenames: false
+        always_run: true
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=10000']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
