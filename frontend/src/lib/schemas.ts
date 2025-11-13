@@ -57,12 +57,7 @@ export type JobStats = z.infer<typeof JobStatsSchema>
 /**
  * Processing status enum.
  */
-export const ProcessingStatusSchema = z.enum([
-  'pending',
-  'processing',
-  'completed',
-  'failed',
-])
+export const ProcessingStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed'])
 
 export type ProcessingStatus = z.infer<typeof ProcessingStatusSchema>
 

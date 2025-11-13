@@ -89,12 +89,8 @@ export function Preview({ jobStatus }: PreviewProps) {
                   Stage: {displayStage.replace(/_/g, ' ')}
                 </p>
               )}
-              {displayMessage && (
-                <p className="text-sm text-muted-foreground">{displayMessage}</p>
-              )}
-              {isConnected && (
-                <p className="text-xs text-green-600">● Live updates</p>
-              )}
+              {displayMessage && <p className="text-sm text-muted-foreground">{displayMessage}</p>}
+              {isConnected && <p className="text-xs text-green-600">● Live updates</p>}
               {jobStatus.device_used && (
                 <p className="text-sm text-muted-foreground">Using: {jobStatus.device_used}</p>
               )}

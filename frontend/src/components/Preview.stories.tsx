@@ -29,7 +29,7 @@ type Story = StoryObj<typeof meta>
  */
 export const Empty: Story = {
   args: {
-    jobStatus: undefined,
+    jobStatus: null,
   },
   parameters: {
     docs: {
@@ -58,7 +58,8 @@ export const ProcessingEarly: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Shows animated spinner and progress percentage. Displays the computing device being used (cuda/cpu).',
+        story:
+          'Shows animated spinner and progress percentage. Displays the computing device being used (cuda/cpu).',
       },
     },
   },
@@ -121,7 +122,8 @@ export const CompletedWithStats: Story = {
       job_id: 'demo-completed-1',
       status: 'completed',
       progress: 100,
-      result_url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIj48cGF0aCBkPSJNMTAgMTBMMTkwIDE0ME0xMCAxNDBMMTkwIDEwIiBzdHJva2U9ImJsYWNrIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=',
+      result_url:
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIj48cGF0aCBkPSJNMTAgMTBMMTkwIDE0ME0xMCAxNDBMMTkwIDEwIiBzdHJva2U9ImJsYWNrIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=',
       stats: {
         path_count: 42,
         total_length_mm: 1234.56,
@@ -159,7 +161,8 @@ export const CompletedComplex: Story = {
       job_id: 'demo-completed-2',
       status: 'completed',
       progress: 100,
-      result_url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cGF0aCBkPSJNNTAgNTBRMTAwIDUwIDE1MCAxMDBUMjUwIDE1MCIgc3Ryb2tlPSJibGFjayIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48cGF0aCBkPSJNMzAwIDUwTDM1MCAyNTBNNTAgMjUwTDM1MCAyNTAiIHN0cm9rZT0iYmxhY2siIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMS41Ii8+PC9zdmc+',
+      result_url:
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cGF0aCBkPSJNNTAgNTBRMTAwIDUwIDE1MCAxMDBUMjUwIDE1MCIgc3Ryb2tlPSJibGFjayIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48cGF0aCBkPSJNMzAwIDUwTDM1MCAyNTBNNTAgMjUwTDM1MCAyNTAiIHN0cm9rZT0iYmxhY2siIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMS41Ii8+PC9zdmc+',
       stats: {
         path_count: 156,
         total_length_mm: 4567.89,
@@ -173,7 +176,8 @@ export const CompletedComplex: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'A more complex result with many paths and longer total length. Useful for testing stat display formatting.',
+        story:
+          'A more complex result with many paths and longer total length. Useful for testing stat display formatting.',
       },
     },
   },
@@ -188,7 +192,8 @@ export const CompletedNoDimensions: Story = {
       job_id: 'demo-completed-3',
       status: 'completed',
       progress: 100,
-      result_url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJibGFjayIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
+      result_url:
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJibGFjayIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
       stats: {
         path_count: 12,
         total_length_mm: 345.67,
@@ -217,7 +222,8 @@ export const CompletedNoStats: Story = {
       job_id: 'demo-completed-4',
       status: 'completed',
       progress: 100,
-      result_url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHN0cm9rZT0iYmxhY2siIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
+      result_url:
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHN0cm9rZT0iYmxhY2siIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
       stats: undefined,
       error: undefined,
       device_used: undefined,
@@ -226,7 +232,8 @@ export const CompletedNoStats: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Minimal completed state with only the SVG preview and download button, no statistics.',
+        story:
+          'Minimal completed state with only the SVG preview and download button, no statistics.',
       },
     },
   },
@@ -289,7 +296,8 @@ export const InWideContainer: Story = {
       job_id: 'demo-wide',
       status: 'completed',
       progress: 100,
-      result_url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNNTAgNTBMMjUwIDE1ME01MCAxNTBMMjUwIDUwIiBzdHJva2U9ImJsYWNrIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=',
+      result_url:
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNNTAgNTBMMjUwIDE1ME01MCAxNTBMMjUwIDUwIiBzdHJva2U9ImJsYWNrIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=',
       stats: {
         path_count: 28,
         total_length_mm: 892.34,

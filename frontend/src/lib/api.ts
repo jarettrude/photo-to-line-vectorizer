@@ -40,17 +40,10 @@ async function parseError(response: Response): Promise<never> {
   try {
     const error = await response.json()
     const validated = ErrorResponseSchema.parse(error)
-    throw new ApiError(
-      validated.detail || 'Request failed',
-      response.status,
-      validated.detail
-    )
+    throw new ApiError(validated.detail || 'Request failed', response.status, validated.detail)
   } catch (e) {
     if (e instanceof ApiError) throw e
-    throw new ApiError(
-      `Request failed with status ${response.status}`,
-      response.status
-    )
+    throw new ApiError(`Request failed with status ${response.status}`, response.status)
   }
 }
 
@@ -158,10 +151,7 @@ export function getDownloadUrl(jobId: string, format: string = 'svg'): string {
  * @param format - Export format (svg, hpgl, gcode)
  * @throws ApiError if download fails
  */
-export async function downloadResult(
-  jobId: string,
-  format: string = 'svg'
-): Promise<Blob> {
+export async function downloadResult(jobId: string, format: string = 'svg'): Promise<Blob> {
   const response = await fetch(getDownloadUrl(jobId, format))
 
   if (!response.ok) {

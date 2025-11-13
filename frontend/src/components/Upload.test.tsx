@@ -57,9 +57,7 @@ describe('Upload Component', () => {
 
   it('shows uploading state during upload', async () => {
     const user = userEvent.setup()
-    mockUploadImage.mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 1000))
-    )
+    mockUploadImage.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 1000)))
 
     render(<Upload onUploadComplete={mockOnUploadComplete} />)
 
@@ -187,9 +185,7 @@ describe('Upload Component', () => {
   })
 
   it('disables input during upload', async () => {
-    mockUploadImage.mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 1000))
-    )
+    mockUploadImage.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 1000)))
 
     render(<Upload onUploadComplete={mockOnUploadComplete} />)
 

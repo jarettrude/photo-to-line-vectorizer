@@ -384,7 +384,8 @@ export const DesignSystem: Story = {
     layout: 'padded',
     docs: {
       description: {
-        story: 'Complete design system reference showing all button styles, sizes, and usage patterns.',
+        story:
+          'Complete design system reference showing all button styles, sizes, and usage patterns.',
       },
     },
   },
