@@ -3,6 +3,9 @@ name = "photo-to-line-vectorizer"
 version = "1.0.0"
 description = "Convert photos to single-line SVG drawings for pen plotters"
 requires-python = ">=3.11"
+dependencies = [
+    "pydantic-settings>=2.12.0",
+]
 
 [tool.mypy]
 python_version = "3.13"
@@ -115,3 +118,8 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+
+[dependency-groups]
+dev = [
+    "datamodel-code-generator>=0.35.0",
+]
