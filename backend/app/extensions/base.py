@@ -65,9 +65,18 @@ class AbstractStaticExtension(ABC):
         Return all discovered providers for this extension.
 
         Providers are auto-discovered from PRV_*.py files in the
-        extension's directory.
+        extension's directory. This method queries the registry to
+        ensure up-to-date provider lists.
         """
-        return cls._providers
+        # Import here to avoid circular dependency
+        from extensions.registry import ExtensionRegistry
+
+        # Ensure discovery has run
+        if not ExtensionRegistry._discovered:
+            ExtensionRegistry.discover()
+
+        # Query registry for providers
+        return ExtensionRegistry.get_providers(cls.name)
 
     @classmethod
     def select_provider(

@@ -81,4 +81,4 @@ class EXT_Vectorize(AbstractStaticExtension):
         context.timing = HookTiming.AFTER.value
         cls.execute_hooks("vectorize", HookTiming.AFTER.value, context)
 
-        return context.output_data or svg_content
+        return context.output_data if context.output_data is not None else svg_content

@@ -26,9 +26,11 @@ ignore = ["E501", "B008", "TRY301", "TRY401"]
 "app/storage/*" = ["PLW0603", "PLW0602", "ARG002"]
 # Extension system uses intentional EXT_* and PRV_* naming
 "app/extensions/*/EXT_*.py" = ["N999", "N801"]
-"app/extensions/*/PRV_*.py" = ["N999", "N801", "ARG003", "PLR0913", "PLC0415", "TRY300"]
+"app/extensions/*/PRV_*.py" = ["N999", "N801", "ARG003", "PLR0913", "PLC0415", "TRY300", "PLR2004"]
 # Extension registry uses dynamic imports
 "app/extensions/registry.py" = ["PLC0415", "B007", "TRY300"]
+# Extension base uses late import to avoid circular dependency
+"app/extensions/base.py" = ["PLC0415"]
 # Tests use imports inside functions, unused hook args, magic numbers
 "tests/*" = ["ARG", "PLC0415", "PIE810", "PLR2004"]
 # Pipeline exports use late imports and complex params

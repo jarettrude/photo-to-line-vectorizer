@@ -79,7 +79,7 @@ class EXT_Optimize(AbstractStaticExtension):
         context.timing = HookTiming.AFTER.value
         cls.execute_hooks("optimize", HookTiming.AFTER.value, context)
 
-        return context.output_data or result
+        return context.output_data if context.output_data is not None else result
 
     @classmethod
     def get_stats(

@@ -70,4 +70,4 @@ class EXT_Preprocess(AbstractStaticExtension):
         context.timing = HookTiming.AFTER.value
         cls.execute_hooks("preprocess", HookTiming.AFTER.value, context)
 
-        return context.output_data or result
+        return context.output_data if context.output_data is not None else result
