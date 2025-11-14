@@ -53,8 +53,8 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 uv pip install -r requirements.txt
 
-# Install ImageTracerJS globally
-npm install -g imagetracerjs
+# Install backend Node dependencies (ImageTracerJS)
+npm install
 
 # Copy environment file
 cp .env.example .env

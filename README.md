@@ -105,8 +105,8 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 uv pip install -r requirements.txt
 
-# Install ImageTracerJS
-npm install -g imagetracerjs
+# Install backend Node dependencies (ImageTracerJS)
+npm install
 
 # Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -317,7 +317,8 @@ Potrace (GPL v2) is isolated via subprocess to avoid license contamination.
 ### ImageTracerJS Not Found
 
 ```bash
-npm install -g imagetracerjs
+cd backend
+npm install
 ```
 
 ### PyTorch CUDA Not Detected

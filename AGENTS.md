@@ -24,7 +24,7 @@
 ## Running Tests
 When presented with a "_test" file, run the file using the command:
 
-`source ./.venv.linux/bin/activate && python -m pytest (your test path) -v --lf`
+`source ./.venv/bin/activate && python -m pytest (your test path) -v --lf`
 
 and repair any deficiencies starting with the easiest, most common or "lowest hanging fruit".
 
@@ -44,58 +44,95 @@ and repair any deficiencies starting with the easiest, most common or "lowest ha
 
 ## Architecture Overview
 
-This is a **FastAPI-based server framework** with a layered architecture designed for scalability and modularity. The codebase follows strict separation of concerns with an extension-based plugin system.
+This is a **FastAPI-based image processing pipeline** with an **extensible architecture**. Each pipeline stage (preprocessing, vectorization, optimization, export) is implemented as an **extension** with multiple **provider** implementations.
 
 ### Core Architecture Layers
 
-
+```
+API Layer (FastAPI)
+    ↓
+Pipeline Orchestration
+    ↓
+Extension Layer (EXT_*)
+  ├── EXT_Preprocess (background removal, enhancement)
+  ├── EXT_LineExtraction (edge detection, line art)
+  ├── EXT_Vectorize (raster to vector conversion)
+  ├── EXT_Optimize (path optimization, simplification)
+  └── EXT_Export (format conversion)
+    ↓
+Provider Layer (PRV_*)
+  ├── PRV_ImageTracer (ImageTracerJS vectorization)
+  ├── PRV_Potrace (Potrace vectorization)
+  ├── PRV_Vtracer (vtracer vectorization)
+  ├── PRV_U2Net (ML background removal)
+  └── PRV_Vpype (vpype optimization)
+```
 
 ### Key Architectural Patterns
 
-- **RORO Pattern**: All methods follow "Receive Object, Return Object" pattern
+- **Extension System**: Static classes with auto-discovery from filesystem
+- **Provider Pattern**: Multiple implementations per pipeline stage with automatic failover
+- **Hook System**: Before/after hooks with priority ordering for cross-cutting concerns
+- **Auto-Discovery**: Extensions (EXT_*.py) and providers (PRV_*.py) automatically discovered
+- **No Instantiation**: All functionality through class methods (static pattern)
 
 
-### Model Architecture
+### Extension Architecture
 
-Each entity follows a three-model pattern:
-- **Entity Model**: Core attributes and validation
-- **Reference Model**: Relationships to other entities
-- **Network Model**: API schemas (POST, PUT, SEARCH, Response classes)
+**Extensions** represent pipeline stages:
+- Static classes inheriting from `AbstractStaticExtension`
+- Coordinate multiple provider implementations
+- Execute hooks before/after operations
+- Auto-discover providers from directory
+
+**Providers** implement specific algorithms:
+- Inherit from `AbstractProvider`
+- Check availability (`is_available()`)
+- Execute processing (`execute()`)
+- Automatically discovered from PRV_*.py files
+
+**Hooks** enable cross-cutting concerns:
+- Register with `@hook` decorator
+- Execute before/after with priority ordering
+- Used for logging, metrics, validation
+- No core code modifications needed
 
 
 ### Testing Framework
 
-- **Abstract Test Classes**: Use provided abstract test base classes instead of creating new ones
-- **Database Isolation**: Each test gets its own database instance with automatic cleanup
-- **Hook Testing**: Comprehensive hook system testing with `@hook_bll` decorator
+- **No-Mock Testing**: Test real implementations with isolated environments
+- **Extension Testing**: Test extensions and providers independently
+- **Hook Testing**: Verify hooks execute with correct priority ordering
+- **Provider Testing**: Test each provider's `is_available()` and `execute()`
+- **Integration Testing**: End-to-end pipeline tests with real images
 - **Parallel Execution**: Tests run in parallel by default using pytest-xdist
 - **Never skip failing tests** - fix the root cause instead
 
-### Authentication & Authorization
+### Extension Discovery
 
-- **JWT-based authentication** with root API key for mutation of system entities
-- **Role-based permissions** with team-scoped role heirarchies
-- **System entities** require root API key authentication for write operations
-- **User context** automatically injected into all BLL operations
+- **Automatic Discovery**: Extensions discovered from `app/extensions/*/EXT_*.py`
+- **Provider Discovery**: Providers discovered from `app/extensions/*/PRV_*.py`
+- **Naming Convention**: `EXT_ExtensionName` and `PRV_ProviderName`
+- **Registration**: Happens automatically via `ExtensionRegistry.discover()`
+- **Caching**: Discovered extensions and providers cached for performance
 
 ### Key Development Principles
 
-- Use UUID primary keys throughout (String type for SQLite, UUID for PostgreSQL)
-- Handle errors at the beginning of functions with early raises, throwing FastAPI HTTPExceptions, as close to the database as possible
-- All BLL managers support hook registration for extensibility
-- Follow the existing search transformer pattern for custom search functionality
-- Use the ModelRegistry system for proper Pydantic/SQLAlchemy integration
-- Database migrations are automatically applied on startup
+- **Add New Providers**: Create one file (PRV_*.py) - automatically discovered
+- **Add Hooks**: Use `@hook` decorator - no core modifications needed
+- **Required Parameters**: `canvas_width_mm`, `canvas_height_mm`, `line_width_mm` always positional
+- **Error Handling**: Early validation with explicit messages
+- **Provider Selection**: Use preferences list with automatic failover
+- **Static Pattern**: All extensions and providers use static methods (no instantiation)
+- **Hook Priorities**: 1-20 critical, 21-50 business logic, 51-80 logging, 81-100 cleanup
 
 ## Project-Specific Requirements: Photo-to-Line-Vectorizer
 
 - **Privacy-First Processing**: Default to local processing. No cloud uploads by default. Any telemetry or remote calls must be opt-in and clearly disclosed.
-- **Primary Output Style**: For portraits/animals, default to multi-stroke line drawings (avoid artificial connector lines). Offer optional single-path modes separately.
 - **Canvas & Line Width Awareness**: `canvas_width_mm`, `canvas_height_mm`, and `line_width_mm` are required positional parameters wherever sizing or preview is computed. No hidden defaults.
 - **Tech Stack (Hard Requirements)**:
   - Frontend: React + TypeScript + TailwindCSS + shadcn/ui; interactive SVG preview; professional UI (no Gradio/Streamlit look).
   - Backend: FastAPI (Python) with PyTorch (CUDA + Metal MPS support), OpenCV, vpype.
-  - Vectorization: ImageTracerJS (public domain) preferred; Potrace only via isolated subprocess if used (GPL caution).
 - **Hardware Acceleration**: Auto-detect device in this order: CUDA → MPS (Apple Metal) → CPU. Expose selected device in logs/response. Implement graceful CPU fallback.
 - **Path Optimization Contract**: Always run `linemerge`, `linesimplify`, `linesort`, `dedupe` (vpype) before returning results. Ensure path count minimization without crossing artifacts.
 - **Hatching/Shading**: Provide auto hatching for darker regions with spacing derived from `line_width_mm` (default 2×). Crosshatch for very dark regions. Must be toggleable.

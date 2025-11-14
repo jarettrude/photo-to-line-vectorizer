@@ -19,6 +19,9 @@ from numpy.typing import NDArray
 logger = logging.getLogger(__name__)
 
 RGB_CHANNELS = 3
+PROJECT_ROOT_LEVELS_UP = 2
+NODE_MODULES_DIRNAME = "node_modules"
+NODE_PATH_ENV_VAR = "NODE_PATH"
 
 
 class ImageTracerVectorizer:
@@ -145,6 +148,11 @@ class ImageTracerVectorizer:
             script_path = Path(tmp_script.name)
             tmp_script.write(tracer_script)
 
+        project_root = Path(__file__).resolve().parents[PROJECT_ROOT_LEVELS_UP]
+        node_modules_dir = project_root / NODE_MODULES_DIRNAME
+        env = os.environ.copy()
+        env[NODE_PATH_ENV_VAR] = str(node_modules_dir)
+
         try:
             result = subprocess.run(
                 ["node", str(script_path)],
@@ -152,6 +160,7 @@ class ImageTracerVectorizer:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                env=env,
             )
 
             if result.returncode == 0:

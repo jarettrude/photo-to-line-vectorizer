@@ -1,0 +1,18 @@
+# Ruff configuration overrides for extension system
+# 
+# The extension system uses specific naming conventions:
+# - EXT_* for extension modules and classes (e.g., EXT_Vectorize)
+# - PRV_* for provider modules and classes (e.g., PRV_ImageTracer)
+#
+# These conventions enable auto-discovery and are intentional.
+
+[lint]
+# Allow EXT_* and PRV_* naming patterns
+ignore = [
+    "N801",  # Class name should use CapWords convention
+    "N999",  # Invalid module name
+]
+
+[lint.per-file-ignores]
+"app/extensions/**/EXT_*.py" = ["N801", "N999"]
+"app/extensions/**/PRV_*.py" = ["N801", "N999"]

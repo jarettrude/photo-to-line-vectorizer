@@ -17,7 +17,6 @@ from auth.models import User
 
 logger = logging.getLogger(__name__)
 
-# Secret key for JWT tokens (should be set via environment variable in production)
 SECRET = (
     settings.secret_key
     if hasattr(settings, "secret_key")

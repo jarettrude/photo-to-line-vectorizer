@@ -9,6 +9,10 @@ import pytest
 from app.pipeline.optimize import VpypeOptimizer
 
 
+ASPECT_RATIO_MIN = 1.9
+ASPECT_RATIO_MAX = 2.1
+
+
 class TestVpypeOptimizer:
     """Tests for VpypeOptimizer."""
 
@@ -147,7 +151,7 @@ class TestVpypeOptimizer:
         # Check aspect ratio is approximately 2:1
         if stats["width_mm"] and stats["height_mm"]:
             aspect_ratio = stats["width_mm"] / stats["height_mm"]
-            assert 1.9 <= aspect_ratio <= 2.1
+            assert ASPECT_RATIO_MIN <= aspect_ratio <= ASPECT_RATIO_MAX
 
     def test_optimize_large_canvas(self, optimizer, simple_svg):
         """Test optimization with large canvas dimensions."""

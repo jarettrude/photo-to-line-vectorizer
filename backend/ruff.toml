@@ -8,7 +8,6 @@ ignore = ["E501", "B008", "TRY301", "TRY401"]
 
 [lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/*" = ["ARG", "PLR2004", "NPY002", "PLC0415"]
 # API endpoints use Request for rate limiting (required by slowapi)
 # Global processor for ML model lazy loading
 "app/api/endpoints.py" = ["ARG001", "PLC0415", "A002", "PLW0603"]
@@ -17,7 +16,6 @@ ignore = ["E501", "B008", "TRY301", "TRY401"]
 # Auth uses FastAPI patterns with Depends
 "app/auth/*" = ["ARG002", "PLC0415", "TRY300", "B904"]
 # Pipeline modules may need late imports for optional dependencies
-"app/pipeline/*" = ["PLC0415", "ARG002", "PLR2004", "PLR0913", "TRY300", "B904", "A002", "F401"]
 # Main app lifespan parameter required by FastAPI
 "app/main.py" = ["ARG001"]
 # Models use short variable names and PyTorch conventions
@@ -31,3 +29,4 @@ ignore = ["E501", "B008", "TRY301", "TRY401"]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+

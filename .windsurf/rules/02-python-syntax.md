@@ -17,4 +17,4 @@ trigger: always_on
 ## Code Style
 - Write concise code
 - Avoid obvious comments
-- Follow Ruff formatting
+- Use Ruff to format and lint code

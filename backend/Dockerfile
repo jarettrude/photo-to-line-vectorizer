@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g imagetracerjs
+COPY package.json ./
+RUN npm install --omit=dev
 
 ENV PATH="/root/.local/bin:${PATH}"
 RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
