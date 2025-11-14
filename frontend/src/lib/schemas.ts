@@ -88,6 +88,17 @@ export const ProcessRequestSchema = z.object({
 export type ProcessRequest = z.infer<typeof ProcessRequestSchema>
 
 /**
+ * Process response schema.
+ */
+export const ProcessResponseSchema = z.object({
+  job_id: z.string().uuid(),
+  status: ProcessingStatusSchema,
+  message: z.string(),
+})
+
+export type ProcessResponse = z.infer<typeof ProcessResponseSchema>
+
+/**
  * Error response schema.
  */
 export const ErrorResponseSchema = z.object({

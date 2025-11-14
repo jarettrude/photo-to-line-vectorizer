@@ -16,6 +16,7 @@ from auth.routes import router as auth_router
 from config import settings
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -88,6 +89,9 @@ app.include_router(api_router, prefix="/api", tags=["api"])
 # Include auth routes if authentication is enabled
 if settings.auth_enabled:
     app.include_router(auth_router)
+
+# Mount static files for uploaded images
+app.mount("/api/uploads", StaticFiles(directory=str(settings.upload_dir)), name="uploads")
 
 
 @app.websocket("/ws/status/{job_id}")

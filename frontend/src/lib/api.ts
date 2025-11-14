@@ -11,11 +11,13 @@ import {
   UploadResponseSchema,
   JobStatusResponse,
   JobStatusResponseSchema,
+  ProcessResponse,
+  ProcessResponseSchema,
   ErrorResponseSchema,
 } from './schemas'
 
 // Re-export types for external use
-export type { ProcessParams, UploadResponse, JobStatusResponse }
+export type { ProcessParams, UploadResponse, JobStatusResponse, ProcessResponse }
 
 const API_BASE = '/api'
 
@@ -84,13 +86,14 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
  * @param jobId - Job identifier from upload
  * @param mode - Processing mode (usually 'auto')
  * @param params - Optional processing parameters
+ * @returns Process response with job status
  * @throws ApiError if processing fails to start
  */
 export async function processImage(
   jobId: string,
   mode: string = 'auto',
   params?: ProcessParams
-): Promise<void> {
+): Promise<ProcessResponse> {
   const response = await fetch(`${API_BASE}/process`, {
     method: 'POST',
     headers: {
@@ -105,6 +108,16 @@ export async function processImage(
 
   if (!response.ok) {
     await parseError(response)
+  }
+
+  const data = await response.json()
+
+  // Runtime validation with Zod
+  try {
+    return ProcessResponseSchema.parse(data)
+  } catch (e) {
+    console.error('Invalid process response:', e)
+    throw new ApiError('Invalid response from server', 500)
   }
 }
 
@@ -141,7 +154,7 @@ export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
  * @returns Download URL
  */
 export function getDownloadUrl(jobId: string, format: string = 'svg'): string {
-  return `${API_BASE}/download/${jobId}?format=${format}`
+  return `${API_BASE}/download/${jobId}?export_format=${format}`
 }
 
 /**
