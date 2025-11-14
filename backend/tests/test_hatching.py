@@ -8,7 +8,6 @@ import pytest
 
 from app.pipeline.hatching import HatchGenerator
 
-
 CANVAS_SIZE = 200
 CANVAS_WIDTH_MM = 200.0
 CANVAS_HEIGHT_MM = 200.0

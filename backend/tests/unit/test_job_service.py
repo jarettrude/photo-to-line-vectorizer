@@ -11,7 +11,6 @@ from pipeline.processor import PhotoToLineProcessor, ProcessingParams, Processin
 from services.job_service import JobService
 from storage import JobStorage
 
-
 STATUS_BAD_REQUEST = 400
 STATUS_PAYLOAD_TOO_LARGE = 413
 STATUS_NOT_FOUND = 404

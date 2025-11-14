@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from extensions.base import AbstractProvider
 
 logger = logging.getLogger(__name__)
 

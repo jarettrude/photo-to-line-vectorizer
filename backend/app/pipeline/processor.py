@@ -13,13 +13,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import cv2
-from models.u2net import U2NetPredictor
+from extensions.line_extraction.EXT_LineExtraction import EXT_LineExtraction
+from extensions.optimize.EXT_Optimize import EXT_Optimize
+from extensions.preprocess.EXT_Preprocess import EXT_Preprocess
+from extensions.registry import ExtensionRegistry
+from extensions.vectorize.EXT_Vectorize import EXT_Vectorize
 
 from pipeline.hatching import HatchGenerator
-from pipeline.line_extraction import LineExtractor
-from pipeline.optimize import VpypeOptimizer
-from pipeline.preprocess import ImagePreprocessor
-from pipeline.vectorize import ImageTracerVectorizer
 
 if TYPE_CHECKING:
     import numpy as np
@@ -90,18 +90,14 @@ class PhotoToLineProcessor:
 
         self.device_manager = device_manager
 
+        ExtensionRegistry.discover()
+
+        self.u2net_available = False
         if u2net_model_path and u2net_model_path.exists():
-            logger.info("Loading U²-Net model...")
-            self.u2net: U2NetPredictor | None = U2NetPredictor(u2net_model_path)
-            self.preprocessor = ImagePreprocessor(self.u2net)
+            logger.info("U²-Net model available for subject isolation")
+            self.u2net_available = True
         else:
             logger.warning("U²-Net model not found, subject isolation unavailable")
-            self.u2net = None
-            self.preprocessor = ImagePreprocessor()
-
-        self.line_extractor = LineExtractor()
-        self.vectorizer = ImageTracerVectorizer()
-        self.optimizer = VpypeOptimizer()
 
         logger.info("PhotoToLineProcessor initialized")
 
@@ -124,18 +120,22 @@ class PhotoToLineProcessor:
             ValueError: If required parameters missing
             RuntimeError: If processing fails
         """
-        logger.info(f"Starting processing: {image_path}")
+        logger.info("Starting processing: %s", image_path)
 
-        preprocessed = self.preprocessor.preprocess(
+        provider_prefs = ["u2net"] if self.u2net_available else ["classical_cv"]
+
+        preprocessed = EXT_Preprocess.preprocess(
             image_path,
+            provider_preferences=provider_prefs,
             isolate_subject=params.isolate_subject,
             max_dimension=2048,
             enhance_contrast=False,
         )
 
         logger.info("Extracting line art...")
-        edges = self.line_extractor.extract_with_params(
+        edges = EXT_LineExtraction.extract(
             preprocessed,
+            provider_preferences=["bilateral_canny"],
             edge_threshold=params.edge_threshold,
             use_ml=params.use_ml,
         )
@@ -157,30 +157,32 @@ class PhotoToLineProcessor:
                 params.canvas_height_mm,
             )
 
-        edges_inverted: NDArray[np.uint8] = cv2.bitwise_not(edges)  # type: ignore[assignment]
+        edges_inverted: NDArray[np.uint8] = cv2.bitwise_not(edges)
 
         logger.info("Vectorizing...")
-        svg_raw = self.vectorizer.vectorize(
+        svg_raw = EXT_Vectorize.vectorize(
             edges_inverted,
+            provider_preferences=["imagetracer"],
             line_threshold=params.line_threshold,
             qtres=1.0,
             pathomit=8,
         )
 
         logger.info("Optimizing paths...")
-        svg_optimized = self.optimizer.optimize(
+        svg_optimized = EXT_Optimize.optimize(
             svg_raw,
             canvas_width_mm=params.canvas_width_mm,
             canvas_height_mm=params.canvas_height_mm,
+            provider_preferences=["vpype"],
             merge_tolerance=params.merge_tolerance,
             simplify_tolerance=params.simplify_tolerance,
         )
 
         stats: Mapping[str, float | int | tuple[float, float, float, float] | None] = (
-            self.optimizer.get_stats(svg_optimized)
+            EXT_Optimize.get_stats(svg_optimized, provider_preferences=["vpype"])
         )
 
-        logger.info(f"Processing complete: {stats['path_count']} paths")
+        logger.info("Processing complete: %d paths", stats["path_count"])
 
         return ProcessingResult(
             svg_content=svg_optimized,
