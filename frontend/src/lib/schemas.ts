@@ -11,22 +11,34 @@ import { z } from 'zod'
  * Processing parameters schema.
  *
  * All canvas and line width parameters are required and must be positive.
- * Optional parameters have sensible defaults defined in the backend.
+ * Validation constraints match backend Pydantic models exactly.
  */
 export const ProcessParamsSchema = z.object({
-  canvas_width_mm: z.number().positive('Canvas width must be positive'),
-  canvas_height_mm: z.number().positive('Canvas height must be positive'),
-  line_width_mm: z.number().positive('Line width must be positive'),
+  // Required parameters with strict bounds matching backend
+  canvas_width_mm: z.number().positive('Canvas width must be positive').max(5000),
+  canvas_height_mm: z.number().positive('Canvas height must be positive').max(5000),
+  line_width_mm: z.number().positive('Line width must be positive').max(10),
+
+  // Optional boolean flags
   isolate_subject: z.boolean().optional(),
   use_ml: z.boolean().optional(),
-  edge_threshold: z.tuple([z.number(), z.number()]).optional(),
-  line_threshold: z.number().optional(),
-  merge_tolerance: z.number().optional(),
-  simplify_tolerance: z.number().optional(),
+
+  // Edge detection parameters
+  edge_threshold: z.tuple([z.number().int(), z.number().int()]).optional().refine(
+    (val) => !val || (val[0] >= 0 && val[0] < val[1] && val[1] <= 255),
+    { message: 'Edge threshold must be 0 <= low < high <= 255' }
+  ),
+  line_threshold: z.number().int().min(1).max(255).optional(),
+
+  // Optimization parameters
+  merge_tolerance: z.number().min(0).max(10).optional(),
+  simplify_tolerance: z.number().min(0).max(10).optional(),
+
+  // Hatching parameters
   hatching_enabled: z.boolean().optional(),
-  hatch_density: z.number().optional(),
-  hatch_angle: z.number().optional(),
-  darkness_threshold: z.number().optional(),
+  hatch_density: z.number().positive().max(10).optional(),
+  hatch_angle: z.number().int().min(-180).max(180).optional(),
+  darkness_threshold: z.number().int().min(0).max(255).optional(),
 })
 
 export type ProcessParams = z.infer<typeof ProcessParamsSchema>
@@ -37,7 +49,7 @@ export type ProcessParams = z.infer<typeof ProcessParamsSchema>
 export const UploadResponseSchema = z.object({
   job_id: z.string().uuid('Invalid job ID format'),
   filename: z.string().min(1, 'Filename required'),
-  image_url: z.string().url('Invalid image URL'),
+  image_url: z.string().min(1), // Backend returns path string, not full URL
 })
 
 export type UploadResponse = z.infer<typeof UploadResponseSchema>
@@ -48,8 +60,8 @@ export type UploadResponse = z.infer<typeof UploadResponseSchema>
 export const JobStatsSchema = z.object({
   path_count: z.number().int().nonnegative(),
   total_length_mm: z.number().nonnegative(),
-  width_mm: z.number().positive().optional(),
-  height_mm: z.number().positive().optional(),
+  width_mm: z.number().positive().nullable().optional(), // Backend can send null
+  height_mm: z.number().positive().nullable().optional(), // Backend can send null
 })
 
 export type JobStats = z.infer<typeof JobStatsSchema>
@@ -67,8 +79,8 @@ export type ProcessingStatus = z.infer<typeof ProcessingStatusSchema>
 export const JobStatusResponseSchema = z.object({
   job_id: z.string().uuid(),
   status: ProcessingStatusSchema,
-  progress: z.number().min(0).max(100),
-  result_url: z.string().url().optional(),
+  progress: z.number().int().min(0).max(100), // Backend returns int, not float
+  result_url: z.string().optional(), // Backend may return non-URL strings
   stats: JobStatsSchema.optional(),
   error: z.string().optional(),
   device_used: z.string().optional(),

@@ -193,18 +193,22 @@ class WebSocketMessage(BaseModel):
     type: Annotated[
         str,
         Field(
-            description="Message type: progress, complete, error",
-            pattern="^(progress|complete|error)$",
+            description="Message type: progress, complete, error, keepalive",
+            pattern="^(progress|complete|error|keepalive)$",
         ),
     ]
     job_id: Annotated[str, Field(description="Job identifier")]
+    progress: Annotated[
+        int | None, Field(default=None, description="Progress percentage", ge=0, le=100)
+    ]
     stage: Annotated[
         str | None, Field(default=None, description="Current processing stage")
-    ]
-    percent: Annotated[
-        int | None, Field(default=None, description="Progress percentage", ge=0, le=100)
     ]
     message: Annotated[str | None, Field(default=None, description="Status message")]
     result_url: Annotated[
         str | None, Field(default=None, description="Result URL if complete")
     ]
+    stats: Annotated[
+        JobStats | None, Field(default=None, description="Processing stats if complete")
+    ]
+    error: Annotated[str | None, Field(default=None, description="Error message if failed")]
