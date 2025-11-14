@@ -3,14 +3,18 @@
  *
  * Provides user interface for configuring processing parameters
  * including canvas size, line width, and processing options.
+ * Features tooltips, sliders, and organized sections.
  */
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Label } from './ui/label'
-import { Input } from './ui/input'
 import { Switch } from './ui/switch'
 import { Button } from './ui/button'
-import { Settings, Play } from 'lucide-react'
+import { Slider } from './ui/slider'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import { Badge } from './ui/badge'
+import { Settings, Play, HelpCircle, Sliders, Sparkles } from 'lucide-react'
 import type { ProcessParams } from '@/lib/api'
 
 interface ControlsProps {
@@ -18,11 +22,64 @@ interface ControlsProps {
   disabled: boolean
 }
 
+interface ParamInfo {
+  label: string
+  description: string
+  unit?: string
+}
+
+const PARAM_INFO: Record<string, ParamInfo> = {
+  canvasWidth: {
+    label: 'Canvas Width',
+    description: 'Output width in millimeters for plotter/laser engraver',
+    unit: 'mm',
+  },
+  canvasHeight: {
+    label: 'Canvas Height',
+    description: 'Output height in millimeters',
+    unit: 'mm',
+  },
+  lineWidth: {
+    label: 'Line Width',
+    description: 'Thickness of drawn lines',
+    unit: 'mm',
+  },
+  edgeThresholdLow: {
+    label: 'Edge Threshold Low',
+    description: 'Lower bound for edge detection (lower = more edges)',
+  },
+  edgeThresholdHigh: {
+    label: 'Edge Threshold High',
+    description: 'Upper bound for edge detection',
+  },
+  lineThreshold: {
+    label: 'Line Threshold',
+    description: 'Minimum line length to keep',
+  },
+  mergeTolerance: {
+    label: 'Merge Tolerance',
+    description: 'Distance threshold for merging nearby line endpoints',
+    unit: 'mm',
+  },
+  simplifyTolerance: {
+    label: 'Simplify Tolerance',
+    description: 'Amount of path simplification (higher = simpler)',
+    unit: 'mm',
+  },
+  hatchDensity: {
+    label: 'Hatch Density',
+    description: 'Spacing between hatching lines',
+  },
+  darknessThreshold: {
+    label: 'Darkness Threshold',
+    description: 'How dark a region must be to receive hatching',
+  },
+}
+
 export function Controls({ onProcess, disabled }: ControlsProps) {
   const [canvasWidth, setCanvasWidth] = useState(300)
   const [canvasHeight, setCanvasHeight] = useState(200)
   const [lineWidth, setLineWidth] = useState(0.3)
-  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [isolateSubject, setIsolateSubject] = useState(false)
   const [useMl, setUseMl] = useState(false)
@@ -35,6 +92,27 @@ export function Controls({ onProcess, disabled }: ControlsProps) {
   const [simplifyTolerance, setSimplifyTolerance] = useState(0.2)
   const [hatchDensity, setHatchDensity] = useState(2.0)
   const [darknessThreshold, setDarknessThreshold] = useState(100)
+
+  const ParamLabel = ({ param }: { param: string }) => {
+    const info = PARAM_INFO[param]
+    if (!info) return <Label>{param}</Label>
+
+    return (
+      <div className="flex items-center gap-2">
+        <Label>{info.label}</Label>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">{info.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    )
+  }
 
   const handleProcess = () => {
     const params: ProcessParams = {
@@ -56,152 +134,113 @@ export function Controls({ onProcess, disabled }: ControlsProps) {
   }
 
   return (
-    <Card>
+    <Card className="animate-scale-in">
       <CardHeader>
-        <CardTitle className="text-lg">Processing Controls</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Settings className="w-5 h-5" />
+          Processing Controls
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="canvas-width">Canvas Width (mm)</Label>
-          <Input
-            id="canvas-width"
-            type="number"
-            value={canvasWidth}
-            onChange={(e) => setCanvasWidth(Number(e.target.value))}
-            min={10}
-            max={2000}
-          />
-        </div>
+      <CardContent>
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="basic">
+              <Sliders className="w-4 h-4 mr-2" />
+              Basic
+            </TabsTrigger>
+            <TabsTrigger value="advanced">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Advanced
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-2">
-          <Label htmlFor="canvas-height">Canvas Height (mm)</Label>
-          <Input
-            id="canvas-height"
-            type="number"
-            value={canvasHeight}
-            onChange={(e) => setCanvasHeight(Number(e.target.value))}
-            min={10}
-            max={2000}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="line-width">Line Width (mm)</Label>
-          <Input
-            id="line-width"
-            type="number"
-            value={lineWidth}
-            onChange={(e) => setLineWidth(Number(e.target.value))}
-            min={0.1}
-            max={5}
-            step={0.1}
-          />
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="isolate-subject"
-            checked={isolateSubject}
-            onCheckedChange={setIsolateSubject}
-          />
-          <Label htmlFor="isolate-subject">Isolate Subject</Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch id="use-ml" checked={useMl} onCheckedChange={setUseMl} />
-          <Label htmlFor="use-ml">Use ML-assisted Vectorization</Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch id="hatching" checked={hatchingEnabled} onCheckedChange={setHatchingEnabled} />
-          <Label htmlFor="hatching">Enable Hatching</Label>
-        </div>
-
-        <div className="pt-4 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="w-full"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
-          </Button>
-        </div>
-
-        {showAdvanced && (
-          <div className="space-y-4 pt-4 border-t">
+          <TabsContent value="basic" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="edge-threshold-low">Edge Threshold Low</Label>
-              <Input
-                id="edge-threshold-low"
-                type="number"
-                value={edgeThresholdLow}
-                onChange={(e) => setEdgeThresholdLow(Number(e.target.value))}
-                min={0}
-                max={255}
+              <div className="flex items-center justify-between">
+                <ParamLabel param="canvasWidth" />
+                <Badge variant="secondary">{canvasWidth} mm</Badge>
+              </div>
+              <Slider
+                value={[canvasWidth]}
+                onValueChange={(v) => setCanvasWidth(v[0])}
+                min={10}
+                max={2000}
+                step={10}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edge-threshold-high">Edge Threshold High</Label>
-              <Input
-                id="edge-threshold-high"
-                type="number"
-                value={edgeThresholdHigh}
-                onChange={(e) => setEdgeThresholdHigh(Number(e.target.value))}
-                min={0}
-                max={255}
+              <div className="flex items-center justify-between">
+                <ParamLabel param="canvasHeight" />
+                <Badge variant="secondary">{canvasHeight} mm</Badge>
+              </div>
+              <Slider
+                value={[canvasHeight]}
+                onValueChange={(v) => setCanvasHeight(v[0])}
+                min={10}
+                max={2000}
+                step={10}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="merge-tolerance">Merge Tolerance (mm)</Label>
-              <Input
-                id="merge-tolerance"
-                type="number"
-                value={mergeTolerance}
-                onChange={(e) => setMergeTolerance(Number(e.target.value))}
-                min={0}
+              <div className="flex items-center justify-between">
+                <ParamLabel param="lineWidth" />
+                <Badge variant="secondary">{lineWidth.toFixed(1)} mm</Badge>
+              </div>
+              <Slider
+                value={[lineWidth]}
+                onValueChange={(v) => setLineWidth(v[0])}
+                min={0.1}
                 max={5}
                 step={0.1}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="line-threshold">Line Threshold</Label>
-              <Input
-                id="line-threshold"
-                type="number"
-                value={lineThreshold}
-                onChange={(e) => setLineThreshold(Number(e.target.value))}
-                min={0}
-                max={255}
-              />
-            </div>
+            <div className="pt-4 border-t space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="isolate-subject"
+                    checked={isolateSubject}
+                    onCheckedChange={setIsolateSubject}
+                  />
+                  <Label htmlFor="isolate-subject">Isolate Subject</Label>
+                </div>
+                {isolateSubject && <Badge variant="success">On</Badge>}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="simplify-tolerance">Simplify Tolerance (mm)</Label>
-              <Input
-                id="simplify-tolerance"
-                type="number"
-                value={simplifyTolerance}
-                onChange={(e) => setSimplifyTolerance(Number(e.target.value))}
-                min={0}
-                max={5}
-                step={0.1}
-              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch id="use-ml" checked={useMl} onCheckedChange={setUseMl} />
+                  <Label htmlFor="use-ml">ML Enhancement</Label>
+                </div>
+                {useMl && <Badge variant="success">On</Badge>}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="hatching"
+                    checked={hatchingEnabled}
+                    onCheckedChange={setHatchingEnabled}
+                  />
+                  <Label htmlFor="hatching">Enable Hatching</Label>
+                </div>
+                {hatchingEnabled && <Badge variant="success">On</Badge>}
+              </div>
             </div>
 
             {hatchingEnabled && (
-              <>
+              <div className="space-y-4 pt-4 border-t animate-slide-down">
                 <div className="space-y-2">
-                  <Label htmlFor="hatch-density">Hatch Density</Label>
-                  <Input
-                    id="hatch-density"
-                    type="number"
-                    value={hatchDensity}
-                    onChange={(e) => setHatchDensity(Number(e.target.value))}
+                  <div className="flex items-center justify-between">
+                    <ParamLabel param="hatchDensity" />
+                    <Badge variant="secondary">{hatchDensity.toFixed(1)}</Badge>
+                  </div>
+                  <Slider
+                    value={[hatchDensity]}
+                    onValueChange={(v) => setHatchDensity(v[0])}
                     min={0.5}
                     max={5}
                     step={0.1}
@@ -209,24 +248,98 @@ export function Controls({ onProcess, disabled }: ControlsProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="darkness-threshold">Darkness Threshold</Label>
-                  <Input
-                    id="darkness-threshold"
-                    type="number"
-                    value={darknessThreshold}
-                    onChange={(e) => setDarknessThreshold(Number(e.target.value))}
+                  <div className="flex items-center justify-between">
+                    <ParamLabel param="darknessThreshold" />
+                    <Badge variant="secondary">{darknessThreshold}</Badge>
+                  </div>
+                  <Slider
+                    value={[darknessThreshold]}
+                    onValueChange={(v) => setDarknessThreshold(v[0])}
                     min={0}
                     max={255}
+                    step={1}
                   />
                 </div>
-              </>
+              </div>
             )}
-          </div>
-        )}
+          </TabsContent>
 
-        <Button onClick={handleProcess} disabled={disabled} className="w-full" size="lg">
+          <TabsContent value="advanced" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <ParamLabel param="edgeThresholdLow" />
+                <Badge variant="secondary">{edgeThresholdLow}</Badge>
+              </div>
+              <Slider
+                value={[edgeThresholdLow]}
+                onValueChange={(v) => setEdgeThresholdLow(v[0])}
+                min={0}
+                max={255}
+                step={1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <ParamLabel param="edgeThresholdHigh" />
+                <Badge variant="secondary">{edgeThresholdHigh}</Badge>
+              </div>
+              <Slider
+                value={[edgeThresholdHigh]}
+                onValueChange={(v) => setEdgeThresholdHigh(v[0])}
+                min={0}
+                max={255}
+                step={1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <ParamLabel param="lineThreshold" />
+                <Badge variant="secondary">{lineThreshold}</Badge>
+              </div>
+              <Slider
+                value={[lineThreshold]}
+                onValueChange={(v) => setLineThreshold(v[0])}
+                min={0}
+                max={255}
+                step={1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <ParamLabel param="mergeTolerance" />
+                <Badge variant="secondary">{mergeTolerance.toFixed(1)} mm</Badge>
+              </div>
+              <Slider
+                value={[mergeTolerance]}
+                onValueChange={(v) => setMergeTolerance(v[0])}
+                min={0}
+                max={5}
+                step={0.1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <ParamLabel param="simplifyTolerance" />
+                <Badge variant="secondary">{simplifyTolerance.toFixed(1)} mm</Badge>
+              </div>
+              <Slider
+                value={[simplifyTolerance]}
+                onValueChange={(v) => setSimplifyTolerance(v[0])}
+                min={0}
+                max={5}
+                step={0.1}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <Button onClick={handleProcess} disabled={disabled} className="w-full mt-6" size="lg">
           <Play className="w-4 h-4 mr-2" />
-          Process Image
+          {disabled ? 'Processing...' : 'Process Image'}
         </Button>
       </CardContent>
     </Card>

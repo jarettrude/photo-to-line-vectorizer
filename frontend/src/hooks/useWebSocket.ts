@@ -33,7 +33,7 @@ export function useWebSocket(jobId: string | null, options: UseWebSocketOptions 
   const [isConnected, setIsConnected] = useState(false)
   const [lastMessage, setLastMessage] = useState<ProgressMessage | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectTimeoutRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (!jobId || !enabled) {
