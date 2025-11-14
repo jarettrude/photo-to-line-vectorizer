@@ -24,6 +24,25 @@ ignore = ["E501", "B008", "TRY301", "TRY401"]
 "app/pipeline/preprocess.py" = ["RUF012", "E741"]
 # Storage uses globals for singleton pattern
 "app/storage/*" = ["PLW0603", "PLW0602", "ARG002"]
+# Extension system uses intentional EXT_* and PRV_* naming
+"app/extensions/*/EXT_*.py" = ["N999", "N801"]
+"app/extensions/*/PRV_*.py" = ["N999", "N801", "ARG003", "PLR0913", "PLC0415", "TRY300", "PLR2004"]
+# Extension registry uses dynamic imports
+"app/extensions/registry.py" = ["PLC0415", "B007", "TRY300"]
+# Extension base uses late import to avoid circular dependency
+"app/extensions/base.py" = ["PLC0415"]
+# Tests use imports inside functions, unused hook args, magic numbers
+"tests/*" = ["ARG", "PLC0415", "PIE810", "PLR2004"]
+# Pipeline exports use late imports and complex params
+"app/pipeline/export.py" = ["ARG002", "PLR0913", "PLC0415", "F401"]
+# Pipeline optimize uses complex params and reserved args
+"app/pipeline/optimize.py" = ["ARG002", "PLR0913"]
+# Pipeline processor uses late imports for dependency management
+"app/pipeline/processor.py" = ["PLC0415"]
+# Hatching uses canvas params for future features
+"app/pipeline/hatching.py" = ["ARG002"]
+# Vectorize extension uses late imports to avoid circular deps
+"app/extensions/vectorize/EXT_Vectorize.py" = ["PLC0415"]
 
 [format]
 quote-style = "double"

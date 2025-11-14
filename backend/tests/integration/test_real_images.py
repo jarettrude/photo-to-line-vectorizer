@@ -86,7 +86,7 @@ async def test_complete_pipeline_jpeg(client, jpeg_image_path):
                 "line_width_mm": 0.3,
                 "isolate_subject": False,
                 "use_ml": False,  # Faster testing without ML
-                "edge_threshold": 50,
+                "edge_threshold": [50, 150],
                 "line_threshold": 10,
             },
         },

@@ -10,10 +10,10 @@ from extensions.hooks import HookTiming, hook
 from extensions.registry import ExtensionRegistry
 
 __all__ = [
-    "AbstractStaticExtension",
     "AbstractProvider",
+    "AbstractStaticExtension",
+    "ExtensionRegistry",
     "HookContext",
     "HookTiming",
     "hook",
-    "ExtensionRegistry",
 ]

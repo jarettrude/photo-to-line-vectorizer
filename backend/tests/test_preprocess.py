@@ -12,7 +12,6 @@ import pytest
 from PIL import Image
 from pipeline.preprocess import ImagePreprocessor
 
-
 RGB_CHANNELS = 3
 ORIGINAL_WIDTH = 800
 ORIGINAL_HEIGHT = 600

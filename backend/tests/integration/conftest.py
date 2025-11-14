@@ -13,7 +13,6 @@ from fastapi.testclient import TestClient
 from main import app
 from storage import init_job_storage
 
-
 DEFAULT_REDIS_URL = "redis://localhost:6379/0"
 
 
