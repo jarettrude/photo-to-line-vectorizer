@@ -21,15 +21,21 @@ export interface ProgressMessage {
   error?: string
 }
 
-interface UseWebSocketOptions {
+interface UseWebSocketParams {
+  jobId: string | null
   onMessage?: (message: ProgressMessage) => void
   onError?: (error: Event) => void
   onClose?: () => void
   enabled?: boolean
 }
 
-export function useWebSocket(jobId: string | null, options: UseWebSocketOptions = {}) {
-  const { onMessage, onError, onClose, enabled = true } = options
+export function useWebSocket({
+  jobId,
+  onMessage,
+  onError,
+  onClose,
+  enabled = true,
+}: UseWebSocketParams) {
   const [isConnected, setIsConnected] = useState(false)
   const [lastMessage, setLastMessage] = useState<ProgressMessage | null>(null)
   const wsRef = useRef<WebSocket | null>(null)

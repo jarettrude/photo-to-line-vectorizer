@@ -38,27 +38,25 @@ export function Preview({ jobStatus }: PreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Connect to WebSocket for real-time updates when processing
-  const { isConnected } = useWebSocket(
-    jobStatus?.status === 'processing' ? jobStatus.job_id : null,
-    {
-      onMessage: (message) => {
-        if (message.type === 'progress') {
-          setRealtimeProgress(message.progress)
-          setRealtimeStage(message.stage || null)
-          setRealtimeMessage(message.message || null)
-        } else if (message.type === 'complete') {
-          // Update will come from polling, just clear real-time state
-          setRealtimeProgress(100)
-          setRealtimeStage(null)
-          setRealtimeMessage('Complete!')
-        } else if (message.type === 'error') {
-          setRealtimeStage(null)
-          setRealtimeMessage(`Error: ${message.error}`)
-        }
-      },
-      enabled: jobStatus?.status === 'processing',
-    }
-  )
+  const { isConnected } = useWebSocket({
+    jobId: jobStatus?.status === 'processing' ? jobStatus.job_id : null,
+    onMessage: (message) => {
+      if (message.type === 'progress') {
+        setRealtimeProgress(message.progress)
+        setRealtimeStage(message.stage || null)
+        setRealtimeMessage(message.message || null)
+      } else if (message.type === 'complete') {
+        // Update will come from polling, just clear real-time state
+        setRealtimeProgress(100)
+        setRealtimeStage(null)
+        setRealtimeMessage('Complete!')
+      } else if (message.type === 'error') {
+        setRealtimeStage(null)
+        setRealtimeMessage(`Error: ${message.error}`)
+      }
+    },
+    enabled: jobStatus?.status === 'processing',
+  })
 
   // Reset real-time state when job changes or completes
   useEffect(() => {
